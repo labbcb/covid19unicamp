@@ -7,14 +7,15 @@ output:
     keep_md: yes
 ---
 
-
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Modelos Preditivos para Novos Casos e Óbitos Municipais
 
 Para o ajuste de modelos
 
-
-```r
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(coronabr)
 ```
