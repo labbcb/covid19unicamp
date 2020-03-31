@@ -384,7 +384,7 @@ summary {
 
 <div id="obtenção-de-dados" class="section level2">
 <h2>Obtenção de Dados</h2>
-<p>Afim de simplificar o acesso aos dados, utilizou-se o pacote <code>coronabr</code>, que importa diariamente os dados compilados pela iniciativa <a href="http://www.brasil.io">Brasil IO</a>. Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no <code>coronabr</code> que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo <code>covid19_cidades.csv</code> possui os dados (por cidade) disponíveis hoje (Tue Mar 31 11:01:25 2020).</p>
+<p>Afim de simplificar o acesso aos dados, utilizou-se o pacote <code>coronabr</code>, que importa diariamente os dados compilados pela iniciativa <a href="http://www.brasil.io">Brasil IO</a>. Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no <code>coronabr</code> que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo <code>covid19_cidades.csv</code> possui os dados (por cidade) disponíveis hoje (Tue Mar 31 11:03:44 2020).</p>
 <pre class="r"><code>library(coronabr)
 library(tidyverse)
 covid19_cidades = get_corona_br()
@@ -401,8 +401,17 @@ unlink(&quot;output&quot;, recursive=TRUE)</code></pre>
 </ul>
 <pre class="r"><code>casos_sp = covid19_cidades %&gt;% filter(city == &quot;São Paulo&quot;) %&gt;% 
   select(-state, -place_type, -is_last, -city_ibge_code)
-casos_sp %&gt;% head() %&gt;% knitr::kable()</code></pre>
-<table>
+casos_sp %&gt;% head() %&gt;% knitr::kable(&quot;markdown&quot;)</code></pre>
+<table style="width:100%;">
+<colgroup>
+<col width="10%"></col>
+<col width="9%"></col>
+<col width="9%"></col>
+<col width="6%"></col>
+<col width="24%"></col>
+<col width="29%"></col>
+<col width="10%"></col>
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">date</th>
