@@ -20,6 +20,7 @@ library(coronabr)
 library(tidyverse)
 covid19_cidades = get_corona_br()
 write_csv(covid19_cidades, "covid19_cidades.csv")
+save(covid19_cidades, file="covid19_cidades.rda")
 unlink("output", recursive=TRUE)
 ```
 
