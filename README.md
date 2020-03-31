@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Tue Mar 31 11:03:44 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Tue Mar 31 11:10:07 2020).
 
 
 ```r
@@ -56,3 +56,6 @@ casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>%
 
 ![](README_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
+## Contato
+
+Para maiores informações, utilize a plataforma [https://covid.ic.unicamp.br/](https://covid.ic.unicamp.br/). Em particular, procuramos documentar informações desta inciativa no seu respectivo tópico em Modelagem e Epidemiologia ([https://covid.ic.unicamp.br/c/tecnolC3B3gicas/ModelagemeEpidemiologia/11](https://covid.ic.unicamp.br/c/tecnolC3B3gicas/ModelagemeEpidemiologia/11)).

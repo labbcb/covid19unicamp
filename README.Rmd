@@ -40,3 +40,6 @@ casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>%
   theme_bw() + xlab("Data") + ylab("Contagem")
 ```
 
+## Contato
+
+Para maiores informações, utilize a plataforma [https://covid.ic.unicamp.br/](https://covid.ic.unicamp.br/). Em particular, procuramos documentar informações desta inciativa no seu respectivo tópico em Modelagem e Epidemiologia ([https://covid.ic.unicamp.br/c/tecnolC3B3gicas/ModelagemeEpidemiologia/11](https://covid.ic.unicamp.br/c/tecnolC3B3gicas/ModelagemeEpidemiologia/11)).
