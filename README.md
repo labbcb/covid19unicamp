@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Wed Apr  1 12:25:00 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Wed Apr  1 12:34:28 2020).
 
 
 ```r
@@ -19,6 +19,7 @@ library(coronabr)
 library(tidyverse)
 library(lubridate)
 covid19_cidades = get_corona_br()
+covid19_cidades = covid19_cidades %>% filter(place_type == 'city')
 write_csv(covid19_cidades, "covid19_cidades.csv")
 write_csv(covid19_cidades, paste0("covid19_cidades-", today(), ".csv"))
 save(covid19_cidades, file="covid19_cidades.rda")
