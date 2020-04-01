@@ -18,9 +18,12 @@ Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que imp
 ```{r, message=FALSE, warning=FALSE}
 library(coronabr)
 library(tidyverse)
+library(lubridate)
 covid19_cidades = get_corona_br()
 write_csv(covid19_cidades, "covid19_cidades.csv")
+write_csv(covid19_cidades, paste0("covid19_cidades-", today(), ".csv"))
 save(covid19_cidades, file="covid19_cidades.rda")
+save(covid19_cidades, file=paste0("covid19_cidades-", today(), ".rda"))
 unlink("output", recursive=TRUE)
 ```
 
@@ -35,11 +38,26 @@ Abaixo, são apresentados dados da cidade de São Paulo, apenas por esta ter sid
 ```{r, message=FALSE, warning=FALSE}
 casos_sp = covid19_cidades %>% filter(city == "São Paulo") %>% 
   select(-state, -place_type, -is_last, -city_ibge_code)
+casos_sp = casos_sp %>% mutate(confirmed=case_when(
+  date == as.Date("2020-03-24") ~ as.integer(717),
+  TRUE ~ confirmed))
 casos_sp %>% head() %>% knitr::kable("markdown")
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
   ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() + scale_y_log10() +
   theme_bw() + xlab("Data") + ylab("Contagem")
 ```
+
+## Taxas de Mudança
+
+```{r}
+temp = casos_sp %>% select(date, confirmed, deaths) %>% arrange(date) %>% 
+  mutate(dx=as.integer(date-lag(date, default=date[1])),
+         dconf=confirmed-lag(confirmed, default=confirmed[1]),
+         rate = dconf/dx)
+ggplot(temp, aes(date, rate)) + geom_line() + geom_point() +
+  theme_bw()
+```
+
 
 ## Contato
 
