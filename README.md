@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Thu Apr  2 10:51:17 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Fri Apr  3 10:36:16 2020).
 
 
 ```r
@@ -49,12 +49,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-02 |São Paulo |      2815|    164|                  12252023|                       22.97580|     0.0583|
 |2020-04-01 |São Paulo |      2418|    144|                  12252023|                       19.73552|     0.0596|
 |2020-03-31 |São Paulo |      1885|    121|                  12252023|                       15.38521|     0.0642|
 |2020-03-30 |São Paulo |      1233|    103|                  12252023|                       10.06364|     0.0835|
 |2020-03-27 |São Paulo |      1044|     62|                  12252023|                        8.52104|     0.0594|
 |2020-03-26 |São Paulo |       899|     53|                  12252023|                        7.33756|     0.0590|
-|2020-03-25 |São Paulo |       722|     44|                  12252023|                        5.89290|     0.0609|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
