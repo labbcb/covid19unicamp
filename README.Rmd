@@ -13,19 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (`r date()`).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (`r date()`).
 
 ```{r, message=FALSE, warning=FALSE}
-library(coronabr)
+library(datacovidbr)
 library(tidyverse)
 library(lubridate)
-covid19_cidades = get_corona_br()
-covid19_cidades = covid19_cidades %>% filter(place_type == 'city')
-write_csv(covid19_cidades, "covid19_cidades.csv")
-write_csv(covid19_cidades, paste0("covid19_cidades-", today(), ".csv"))
-save(covid19_cidades, file="covid19_cidades.rda")
-save(covid19_cidades, file=paste0("covid19_cidades-", today(), ".rda"))
-unlink("output", recursive=TRUE)
+datapath = "dados"
+covid19_cidades = brasilio() %>% filter(place_type == 'city')
+write_csv(covid19_cidades, file.path(datapath, "covid19_cidades.csv"))
+write_csv(covid19_cidades, file.path(datapath, paste0("covid19_cidades-", today(), ".csv")))
+save(covid19_cidades, file=file.path(datapath, "covid19_cidades.rda"))
+save(covid19_cidades, file=file.path(datapath, paste0("covid19_cidades-", today(), ".rda")))
 ```
 
 ## Manipulação de dados
@@ -45,7 +44,8 @@ casos_sp = casos_sp %>% mutate(confirmed=case_when(
 casos_sp %>% head() %>% knitr::kable("markdown")
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
   ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() + scale_y_log10() +
-  theme_bw() + xlab("Data") + ylab("Contagem")
+  theme_bw() + xlab("Data") + ylab("Contagem") +
+  ggtitle("Casos Confirmados e Óbitos na Cidade de São Paulo")
 ```
 
 ## Taxas de Mudança

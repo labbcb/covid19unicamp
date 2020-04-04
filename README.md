@@ -11,20 +11,19 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote `coronabr`, que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io). Pode ser o caso de se considerar a redução de dependências e acessar os dados diretamente da plataforma supracitada, entretanto há facilidades implementadas no `coronabr` que podem ser úteis. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Fri Apr  3 10:36:16 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sat Apr  4 02:21:42 2020).
 
 
 ```r
-library(coronabr)
+library(datacovidbr)
 library(tidyverse)
 library(lubridate)
-covid19_cidades = get_corona_br()
-covid19_cidades = covid19_cidades %>% filter(place_type == 'city')
-write_csv(covid19_cidades, "covid19_cidades.csv")
-write_csv(covid19_cidades, paste0("covid19_cidades-", today(), ".csv"))
-save(covid19_cidades, file="covid19_cidades.rda")
-save(covid19_cidades, file=paste0("covid19_cidades-", today(), ".rda"))
-unlink("output", recursive=TRUE)
+datapath = "dados"
+covid19_cidades = brasilio() %>% filter(place_type == 'city')
+write_csv(covid19_cidades, file.path(datapath, "covid19_cidades.csv"))
+write_csv(covid19_cidades, file.path(datapath, paste0("covid19_cidades-", today(), ".csv")))
+save(covid19_cidades, file=file.path(datapath, "covid19_cidades.rda"))
+save(covid19_cidades, file=file.path(datapath, paste0("covid19_cidades-", today(), ".rda")))
 ```
 
 ## Manipulação de dados
@@ -49,17 +48,18 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-03 |São Paulo |      3202|    186|                  12252023|                       26.13446|     0.0581|
 |2020-04-02 |São Paulo |      2815|    164|                  12252023|                       22.97580|     0.0583|
 |2020-04-01 |São Paulo |      2418|    144|                  12252023|                       19.73552|     0.0596|
 |2020-03-31 |São Paulo |      1885|    121|                  12252023|                       15.38521|     0.0642|
 |2020-03-30 |São Paulo |      1233|    103|                  12252023|                       10.06364|     0.0835|
 |2020-03-27 |São Paulo |      1044|     62|                  12252023|                        8.52104|     0.0594|
-|2020-03-26 |São Paulo |       899|     53|                  12252023|                        7.33756|     0.0590|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
   ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() + scale_y_log10() +
-  theme_bw() + xlab("Data") + ylab("Contagem")
+  theme_bw() + xlab("Data") + ylab("Contagem") +
+  ggtitle("Casos Confirmados e Óbitos na Cidade de São Paulo")
 ```
 
 ![](README_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
