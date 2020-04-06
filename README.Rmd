@@ -31,10 +31,6 @@ save(covid19_cidades, file=file.path(datapath, paste0("covid19_cidades-", today(
 
 Abaixo, são apresentados dados da cidade de São Paulo, apenas por esta ter sido a cidade onde foi identificado o paciente zero do Brasil e haver um histórico maior de informações, que podem ser úteis para a modelagem de casos e óbitos.
 
-#### TODO
-
-  * Observar ocorrências de zeros na coluna `confirmed` (vide 24/03/2020)
-
 ```{r, message=FALSE, warning=FALSE}
 casos_sp = covid19_cidades %>% filter(city == "São Paulo") %>% 
   select(-state, -place_type, -is_last, -city_ibge_code)

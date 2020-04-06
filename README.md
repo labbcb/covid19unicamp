@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sun Apr  5 22:03:59 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Mon Apr  6 15:40:44 2020).
 
 
 ```r
@@ -30,10 +30,6 @@ save(covid19_cidades, file=file.path(datapath, paste0("covid19_cidades-", today(
 
 Abaixo, são apresentados dados da cidade de São Paulo, apenas por esta ter sido a cidade onde foi identificado o paciente zero do Brasil e haver um histórico maior de informações, que podem ser úteis para a modelagem de casos e óbitos.
 
-#### TODO
-
-  * Observar ocorrências de zeros na coluna `confirmed` (vide 24/03/2020)
-
 
 ```r
 casos_sp = covid19_cidades %>% filter(city == "São Paulo") %>% 
@@ -48,12 +44,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-05 |São Paulo |      3612|    220|                  12252023|                       29.48085|     0.0609|
 |2020-04-04 |São Paulo |      3496|    212|                  12252023|                       28.53406|     0.0606|
 |2020-04-03 |São Paulo |      3202|    186|                  12252023|                       26.13446|     0.0581|
 |2020-04-02 |São Paulo |      2815|    164|                  12252023|                       22.97580|     0.0583|
 |2020-04-01 |São Paulo |      2418|    144|                  12252023|                       19.73552|     0.0596|
 |2020-03-31 |São Paulo |      1885|    121|                  12252023|                       15.38521|     0.0642|
-|2020-03-30 |São Paulo |      1233|    103|                  12252023|                       10.06364|     0.0835|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
