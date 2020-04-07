@@ -34,9 +34,9 @@ Abaixo, são apresentados dados da cidade de São Paulo, apenas por esta ter sid
 ```{r, message=FALSE, warning=FALSE}
 casos_sp = covid19_cidades %>% filter(city == "São Paulo") %>% 
   select(-state, -place_type, -is_last, -city_ibge_code)
-casos_sp = casos_sp %>% mutate(confirmed=case_when(
-  date == as.Date("2020-03-24") ~ as.integer(717),
-  TRUE ~ confirmed))
+# casos_sp = casos_sp %>% mutate(confirmed=case_when(
+#   date == as.Date("2020-03-24") ~ as.integer(717),
+#  TRUE ~ confirmed))
 casos_sp %>% head() %>% knitr::kable("markdown")
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
   ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() + scale_y_log10() +
