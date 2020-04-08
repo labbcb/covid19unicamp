@@ -26,7 +26,7 @@ wor <- CSSEGISandData()
 Modelo assume três grupos de pessoas: suscetíveis a doença ($S$), infectadas ($I$) e recuperadas ($R$).
 \begin{figure}[ht]
 	\centering
-	\includegraphics[]{sir_diagrama.png} 
+	\includegraphics[]{sir_diagrama.png}
 \end{figure}
 
 - As equações diferenciais são controladas pelos parâmetros $\beta \in (0, 1)$ e $\gamma \in (0, 1)$.
@@ -38,7 +38,7 @@ Modelo assume três grupos de pessoas: suscetíveis a doença ($S$), infectadas 
 \begin{eqnarray}
 \dfrac{dS}{dt} &=&-\beta\,S\,I \\
 \dfrac{dI}{dt} &=& \beta\,S\,I-\gamma\,I \\
-\dfrac{dS}{dt} &=&-\gamma \,I 
+\dfrac{dS}{dt} &=&-\gamma \,I
 \end{eqnarray}
 
 - Para resolver a EDO utilizou-se a função `ode` do pacote `deSolve`.
@@ -58,14 +58,14 @@ por um indivíduo com COVID.
 Casos de Covid19 obtidos do repositório [CSSEGISandData/COVID-19](https://github.com/CSSEGISandData/COVID-19).
 
 ```{r, echo = FALSE}
-df <- wor %>% 
-  ungroup() %>% 
+df <- wor %>%
+  ungroup() %>%
   filter(Country.Region == "Brazil", casosAcumulados > 0)  
-  
 
-tb1 = df %>% 
-  select(-Country.Region, -Lat, -Long) %>% 
-  gather(status, obs, -data) 
+
+tb1 = df %>%
+  select(-Country.Region, -Lat, -Long) %>%
+  gather(status, obs, -data)
 
 ggplot(tb1, aes(x = data, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
@@ -89,11 +89,11 @@ obj       <- fit.model(infected = infected, recovered = recovered,
 res       <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", align = rep("c", 6)),
-             table.placement = "h", caption.placement = "top", 
+             table.placement = "h", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
 res$plot1 +
   ggtitle("Ajuste modelo SIR versus casos observados")
-res$plot2 + 
+res$plot2 +
   ggtitle("Predições do modelo SIR")
 res$plot3 +
   ggtitle("Comportamento do total de infectados")
@@ -105,29 +105,26 @@ res$plot3 +
 Casos de covid no estado de SP obtidos da iniciativa [Brasil IO](https://www.brasil.io/home).
 
 ```{r dados_estado, echo=FALSE}
-<<<<<<< HEAD
 estado <- mun %>%
   filter(state == "SP", place_type == "state") %>%
   select(date, confirmed, deaths, estimated_population_2019) %>%
   arrange(date) %>%
-  mutate(deaths = ifelse(is.na(deaths), 0, deaths)) %>% 
-  rename(pop = estimated_population_2019, 
-         casos_Acumulados = confirmed, 
+  mutate(deaths = ifelse(is.na(deaths), 0, deaths)) %>%
+  rename(pop = estimated_population_2019,
+         casos_Acumulados = confirmed,
          mortes_Acumuladas = deaths)
 
 
-tb1 = estado %>% 
-  select(-pop) %>% 
-=======
+tb1 = estado %>%
+  select(-pop) %>%
 estados <- mun  %>%
    filter(state == "SP", place_type == "state") %>%
    select(date, confirmed, deaths) %>%
    arrange(date) %>%
    mutate(deaths = ifelse(is.na(deaths), 0, deaths))
 
-tb1 <- estados %>% 
->>>>>>> aaa164f6407495c9860ca43af5361ddc93704e87
-  gather(status, obs, -date) 
+tb1 <- estados %>%
+  gather(status, obs, -date)
 
 ylim <- range(tb1$obs)
 ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
@@ -142,22 +139,15 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
 
 ```{r ajuste_estado, echo = FALSE, results='asis'}
 
-<<<<<<< HEAD
 infected <- estado$casos_Acumulados - estado$mortes_Acumuladas
-N        <- estado$pop[1]
-dias     <- estado$date
-obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
-=======
-infected <- estados$confirmed - estados$deaths
 N        <- 44.04*10^6 #pop de 40.04 milhões pela wikipedia
 dias     <- estados$date
-obj      <- fit.model(infected, N = N, parms = c(0.5, 0.5), dates = dias)
->>>>>>> aaa164f6407495c9860ca43af5361ddc93704e87
+obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
 res      <- summary.model(obj)
 
-print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", 
+print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.",
                     align = rep("c", 6)),
-             table.placement = "ht", caption.placement = "top", 
+             table.placement = "ht", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
 
 res$plot1 +
@@ -180,23 +170,23 @@ RMs <- c("Americana", "Artur Nogueira", "Campinas", "Cosmópolis", "Engenheiro C
           "Holambra", "Hortolândia", "Indaiatuba", "Itatiba", "Jaguariúna", "Monte Mor",
           "Morungaba", "Nova Odessa", "Paulínia", "Pedreira", "Sumaré", "Valinhos", "Vinhedo")
 
-RM_camp <- mun %>% 
+RM_camp <- mun %>%
   filter(city %in% RMs)
 
 ## População total
 pop = sum(with(RM_camp, tapply(estimated_population_2019, city, max)))
 
-RM_camp <- RM_camp %>% 
-  group_by(date) %>% 
-  summarise(confirmed = sum(confirmed, na.rm = T), 
-            deaths    = sum(deaths, na.rm = T)) %>% 
-  ungroup() %>% 
-  arrange(date) %>% 
-  rename(casos_Acumulados = confirmed, 
+RM_camp <- RM_camp %>%
+  group_by(date) %>%
+  summarise(confirmed = sum(confirmed, na.rm = T),
+            deaths    = sum(deaths, na.rm = T)) %>%
+  ungroup() %>%
+  arrange(date) %>%
+  rename(casos_Acumulados = confirmed,
          mortes_Acumuladas = deaths)
 
-tb1 <- RM_camp %>% 
-  gather(status, obs, -date) 
+tb1 <- RM_camp %>%
+  gather(status, obs, -date)
 
 ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
@@ -216,20 +206,18 @@ dias     <- RM_camp$date
 obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
 res      <- summary.model(obj)
 
-print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", 
+print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.",
                     align = rep("c", 6)),
-             table.placement = "ht", caption.placement = "top", 
+             table.placement = "ht", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
 
 res$plot1 +
   ggtitle("Ajuste modelo SIR versus casos observados")
 
-res$plot2 + 
+res$plot2 +
   ggtitle("Predições do modelo SIR")
 
 res$plot3 +
   ggtitle("Predição do total de infectados do modelo SIR")
 
 ```
-
-
