@@ -1,0 +1,137 @@
+---
+title: "Derivadas"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(patchwork)
+library(datacovidbr)
+```
+
+# Objetivo
+
+Trabalhar na análise do comportamento dos casos baseado nas derivadas da função de casos acumulados.
+
+  * Seja $X_t$ o número de casos acumulados até o tempo $t$.
+  * Definindo $X_t'$ a diferença $X_t - X_{t-1} \geq 0$ (uma "versão discreta da derivada").
+  * Definindo $X_t''$ a diferença $X_t' - X_{t-1}'$ (segunda derivada).
+  
+## Comportamento esperado
+
+Assumindo que o número de casos novos por dia seja bell-shaped como aparece na televisão (também é uma das consequências da modelagem usando SIR):
+
+  * A curva $X_t$ deve ser algo parecido com um sigmoid.
+  * A curva $X_t'$ é bell-shaped.
+  * A curva $X_t''$ deve ter um formato parecido com o primeiro período da função seno.
+  
+Exemplo ingênuo assumindo que a curva $X_t$ seja probit function a menos de uma constate (ignorando a escala do `y`):
+
+```{r, echo = FALSE, out.width = "100%", fig.height=2}
+ddnorm <- function(x, mean = 0, sd = 1) {
+  return(-((x-mean)/(sd^2))*dnorm(x, mean, sd))
+} 
+p1 <- ggplot(data.frame(x = 1:150), aes(x)) + 
+  stat_function(fun = pnorm, args = list(mean = 50, sd = 15)) + 
+  ggtitle("Casos acumulados") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 8)) 
+p2 <- ggplot(data.frame(x = 1:150), aes(x)) + 
+  stat_function(fun = dnorm, args = list(mean = 50, sd = 15)) +
+  ggtitle("Novos casos (1 derivada)") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 8))
+p3 <- ggplot(data.frame(x = 1:150), aes(x)) + 
+  stat_function(fun = ddnorm, args = list(mean = 50, sd = 15)) +
+  ggtitle("Incremento nos novos casos", subtitle = "(2 derivada)") + 
+  theme_bw() +
+  theme(plot.title = element_text(size = 8), plot.subtitle = element_text(size = 8))
+(p1 | p2 | p3)
+```
+
+## Métricas importantes
+
+  * Total de casos: $X_\infty$.
+  * Pico de casos: $\arg \max_t X'_t$ ou $t: X''_t = 0$. 
+  * Se a taxa de subnotificação for independente do número de casos, então a data do pico de casos não é afetada pela existência de subnotificação.
+  
+
+```{r, echo = FALSE}
+p3 +
+  geom_hline(yintercept = 0, lty = "dashed") +
+  annotate("text", label = "Ponto de inflexão", x = 80, y = 0.001, color = "blue") +
+  geom_segment(aes(x = 80, y = 0.0009, xend = 53, yend = 10^-4), color = "blue",
+               arrow = arrow())
+```
+
+## Tendências em alguns países
+
+### Casos acumulados
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, cache = TRUE}
+df <- CSSEGISandData() %>%
+  filter(Country.Region %in% c("China", "US", "Korea, South", "Brazil"),
+         casosAcumulados > 0) %>%
+  group_by(Country.Region) %>%
+  mutate(d1 = c(0, diff(casosAcumulados)), 
+         d2 = c(0, diff(d1)))
+```
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+ggplot(df, aes(x = data, y = casosAcumulados)) + 
+  geom_line() +
+  facet_wrap(~ Country.Region, scales = "free_y") +
+  ggtitle("Casos Acumulados")
+```
+
+### Casos novos
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+ggplot(df, aes(x = data, y = d1)) + 
+  geom_line() +
+  facet_wrap(~ Country.Region, scales = "free_y") +
+  ggtitle("Novos casos") +
+  geom_smooth(method = "loess", se = FALSE, lty = "dashed", size = 0.5)
+```
+
+### Incremento de casos novos
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+ggplot(df, aes(x = data, y = d2)) + 
+  geom_line() +
+  facet_wrap(~ Country.Region, scales = "free_y") +
+  ggtitle("Diferença Novos Casos") +
+  geom_smooth(method = "loess", se = FALSE, lty = "dashed", size = 0.5) +
+  geom_hline(yintercept = 0, lty = "dashed", size = 0.5)
+```
+
+### Incremento de casos novos (só suavização)
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+ggplot(df, aes(x = data, y = d2)) + 
+  facet_wrap(~ Country.Region, scales = "free_y") +
+  ggtitle("Diferença Novos Casos", subtitle = "Suavização") +
+  geom_smooth(method = "loess", se = FALSE, lty = "dashed", size = 0.5) +
+  geom_hline(yintercept = 0, lty = "dashed", size = 0.5)
+```
+
+## Observações
+
+  * Seria possível modelar os casos acumulados e/ou as derivadas com uma tendência deterministica parametrizável, já que sabemos qual o tipo de função deve aparecer em cada caso, e outro component aleatório modelado com séries temporais?
+  
+  * No exemplo ingênuo do primeiro caso:
+  
+\begin{equation}
+X_t = f(t, \theta) + \epsilon_t,
+\end{equation}
+onde $\epsilon_t$ é algum tipo de modelo de séries temporais e $f(t, \theta)$ é função do tempo e de alguns parâmetros, por exemplo $f(t, \theta) = c \Phi(\frac{t - \mu}{\sigma})$ ($\Phi$ é a acumulada da normal padrão). Nesse exemplo $c$ tem relação com o tamanho da população, $\mu$ controla quando os casos começam a aparecer (e o pico) e $\sigma$ controla o "achatamento" da curva de contágio.
+
+Por outro lado, seria possível modelar os novos casos diretamente
+
+\begin{equation}
+X'_t = f(t, \theta) + \epsilon_t,
+\end{equation}
+ou até a segunda derivada.
+
+
