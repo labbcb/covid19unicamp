@@ -40,6 +40,8 @@ fit.model <- function(infected, recovered = 0, N, parms, dates = NULL)
   est   <- setNames(out$par, c("beta", "gamma"))
   R0    <- setNames(est["beta"] / est["gamma"], "R0")
   
+  # cat(ifelse(out$convergence == 0, "Convegencia obtida", "Convergencia falhou"), "\n")
+  
   obj   <- list(infected = infected, 
                 recovered = recovered, 
                 N = N, 
@@ -77,16 +79,12 @@ summary.model <- function(obj, h = 50)
     mutate(status = case_when(status == "I" ~ "Infectados",
                               status == "R" ~ "Recuperados",
                               status == "S" ~ "Suscetiveis"))
-  ylim <- range(c(0,tb_long$estimate))
 
   p_pred <- ggplot(tb_long, aes(x = time, y = estimate, col = status)) +
     geom_line(size = 1) +
-    labs(x = "Dia", y = "Total acumulado", col = "") +
-    scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                       labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
+    labs(x = "Dia", y = "Total", col = "") +
     theme_bw() +
-    theme(text = element_text(size = 14), 
-          legend.position = "top")
+    theme(text = element_text(size = 14), legend.position = "top")
   
   if(!is.null(obj$dates))
   {
@@ -96,14 +94,11 @@ summary.model <- function(obj, h = 50)
   ## Gráfico do comportamento de infectados
   tb_infec <- tb_long %>% 
     filter(status == "Infectados")
-  ylim <- range(c(0,tb_infec$estimate))
-  
+
   p_infec <- ggplot(tb_infec, aes(x = time, y = estimate)) +
     geom_line(size = 1) +
     geom_vline(xintercept = I_max$time, linetype = "dashed") +
     labs(x = "Dia", y = "Total da Populacao", col = "") +
-    scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                       labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
     theme_bw() +
     theme(text = element_text(size = 14), 
           legend.position = "top")
@@ -129,9 +124,6 @@ summary.model <- function(obj, h = 50)
     geom_point(size = 1) +
     geom_point() +
     labs(x = "Dia", y = "Total acumulado", col = "") +
-    scale_color_manual(values = c("red", "blue")) +
-    scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                       labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
     theme_bw() +
     theme(text = element_text(size = 14), 
           legend.position = "top")

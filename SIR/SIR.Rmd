@@ -22,7 +22,6 @@ wor <- CSSEGISandData()
 
 ## Considerações do modelo SIR
 
-
 Modelo assume três grupos de pessoas: suscetíveis a doença ($S$), infectadas ($I$) e recuperadas ($R$).
 \begin{figure}[ht]
 	\centering
@@ -49,8 +48,9 @@ número de infectados observados e infectados predito pelo modelo.
 - $R_0 = \frac{\beta}{\gamma}$, a taxa de reprodução, indica em média o número de pessoas que são infectados
 por um indivíduo com COVID.
 
-- $I_{\max}$ e $T_{\max}$ são predições do número máximo de infectados e o tempo (data) de ocorrência, respectivamente. 
+- $I_{\max}$ e $T_{\max}$ são predições do número máximo de infectados e o tempo (data) de ocorrência, respectivamente.
 
+- As curvas de predições consideram $h = 50$ dias após a última data observada.
 
 \newpage
 ## Brasil
@@ -66,15 +66,11 @@ tb1 = df %>%
   select(-Country.Region, -Lat, -Long) %>% 
   gather(status, obs, -data) 
 
-ylim <- range(tb1$obs)
 ggplot(tb1, aes(x = data, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
   geom_point() +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
-  scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                      labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
   scale_x_date(date_breaks = "1 week", date_labels = "%d/%b") +
-  scale_color_manual(values = c("blue", "red", "green")) +
   theme_bw() +
   theme(text = element_text(size = 14), legend.position = "top")
 
@@ -83,12 +79,12 @@ ggplot(tb1, aes(x = data, y = obs, col = status, fill = status)) +
 
 ```{r ajuste_brasil, echo = FALSE, results='asis'}
 
-infected  <- df$casosAcumulados
+infected  <- df$casosAcumulados - df$obitosAcumulado
 recovered <- df$recuperadosAcumulado[1]
 N         <- 210000000 # população do pais
 dias      <- df$data
 obj       <- fit.model(infected = infected, recovered = recovered,
-                      N = N, parms = c(0.2, 0.5), dates = dias)
+                      N = N, parms = c(0.5, 0.5), dates = dias)
 res       <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", align = rep("c", 6)),
@@ -98,6 +94,8 @@ res$plot1 +
   ggtitle("Ajuste modelo SIR versus casos observados")
 res$plot2 + 
   ggtitle("Predições do modelo SIR")
+res$plot3 +
+  ggtitle("Comportamento do total de infectados")
 ```
 
 \newpage
@@ -106,19 +104,18 @@ res$plot2 +
 Casos de covid no estado de SP obtidos da iniciativa [Brasil IO](https://www.brasil.io/home).
 
 ```{r dados_estado, echo=FALSE}
-estados <- mun %>% 
-  group_by(date, state) %>% 
-  summarise(confirmed = sum(confirmed, na.rm = T), 
-            deaths    = sum(deaths, na.rm = T), 
-            pop       = max(estimated_population_2019, na.rm = T)) %>% 
-  ungroup() %>% 
-  arrange(state, date) %>% 
-  filter(state == "SP") %>% 
-  mutate(casos_Acumulados  = cumsum(confirmed - deaths),
-         mortes_Acumuladas = cumsum(deaths)) 
+estado <- mun %>%
+  filter(state == "SP", place_type == "state") %>%
+  select(date, confirmed, deaths, estimated_population_2019) %>%
+  arrange(date) %>%
+  mutate(deaths = ifelse(is.na(deaths), 0, deaths)) %>% 
+  rename(pop = estimated_population_2019, 
+         casos_Acumulados = confirmed, 
+         mortes_Acumuladas = deaths)
 
-tb1 = estados %>% 
-  select(-state, -pop, -confirmed, -deaths) %>% 
+
+tb1 = estado %>% 
+  select(-pop) %>% 
   gather(status, obs, -date) 
 
 ylim <- range(tb1$obs)
@@ -126,10 +123,7 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
   geom_point() +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
-  scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                      labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
   scale_x_date(date_breaks = "1 week", date_labels = "%d/%b") +
-  scale_color_manual(values = c("blue", "red")) +
   theme_bw() +
   theme(text = element_text(size = 14), legend.position = "top")
 ```
@@ -137,10 +131,10 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
 
 ```{r ajuste_estado, echo = FALSE, results='asis'}
 
-infected <- estados$casos_Acumulados
-N        <- as.numeric(estados$pop[1])
-dias     <- estados$date
-obj      <- fit.model(infected, N = N, parms = c(0.5, 0.5), dates = dias)
+infected <- estado$casos_Acumulados - estado$mortes_Acumuladas
+N        <- estado$pop[1]
+dias     <- estado$date
+obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
 res      <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", 
@@ -150,8 +144,10 @@ print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do m
 
 res$plot1 +
   ggtitle("Ajuste modelo SIR versus casos observados")
-res$plot2 + 
+res$plot2 +
   ggtitle("Predições do modelo SIR")
+res$plot3 +
+  ggtitle("Comportamento do total de infectados")
 
 ```
 
@@ -163,12 +159,13 @@ Casos de covid na região metropolitana de Campinas considerando as informação
 
 ```{r dados_rm, echo=FALSE}
 RMs <- c("Americana", "Artur Nogueira", "Campinas", "Cosmópolis", "Engenheiro Coelho",
-                 "Holambra", "Hortolândia", "Indaiatuba", "Itatiba", "Jaguariúna", "Monte Mor",
-                 "Morungaba", "Nova Odessa", "Paulínia", "Pedreira", "Sumaré", "Valinhos", "Vinhedo")
+          "Holambra", "Hortolândia", "Indaiatuba", "Itatiba", "Jaguariúna", "Monte Mor",
+          "Morungaba", "Nova Odessa", "Paulínia", "Pedreira", "Sumaré", "Valinhos", "Vinhedo")
 
 RM_camp <- mun %>% 
   filter(city %in% RMs)
-# População total
+
+## População total
 pop = sum(with(RM_camp, tapply(estimated_population_2019, city, max)))
 
 RM_camp <- RM_camp %>% 
@@ -177,22 +174,17 @@ RM_camp <- RM_camp %>%
             deaths    = sum(deaths, na.rm = T)) %>% 
   ungroup() %>% 
   arrange(date) %>% 
-  mutate(casos_Acumulados  = cumsum(confirmed - deaths),
-         mortes_Acumuladas = cumsum(deaths)) 
+  rename(casos_Acumulados = confirmed, 
+         mortes_Acumuladas = deaths)
 
 tb1 <- RM_camp %>% 
-  select(-confirmed, -deaths) %>% 
   gather(status, obs, -date) 
 
-ylim <- range(tb1$obs)
 ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
   geom_point() +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
-  scale_y_continuous(limits = ylim, breaks = round(seq(ylim[1], ylim[2], l = 5)), 
-                      labels = FF_pretty(round(seq(ylim[1], ylim[2], l = 5)))) +
   scale_x_date(date_breaks = "4 days", date_labels = "%d/%b") +
-  scale_color_manual(values = c("blue", "red")) +
   theme_bw() +
   theme(text = element_text(size = 14), legend.position = "top")
 ```
@@ -200,10 +192,10 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
 
 ```{r ajuste_rm, echo = FALSE, results='asis'}
 
-infected <- RM_camp$casos_Acumulados
+infected <- RM_camp$casos_Acumulados - RM_camp$mortes_Acumuladas
 N        <- as.numeric(pop)
 dias     <- RM_camp$date
-obj      <- fit.model(infected, N = N, parms = c(0.5, 0.5), dates = dias)
+obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
 res      <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", 
@@ -213,10 +205,11 @@ print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do m
 
 res$plot1 +
   ggtitle("Ajuste modelo SIR versus casos observados")
+
 res$plot2 + 
   ggtitle("Predições do modelo SIR")
 
-res$plot3 + 
+res$plot3 +
   ggtitle("Predição do total de infectados do modelo SIR")
 
 ```
