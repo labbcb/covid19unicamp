@@ -38,7 +38,7 @@ Modelo assume três grupos de pessoas: suscetíveis a doença ($S$), infectadas 
 \begin{eqnarray}
 \dfrac{dS}{dt} &=&-\beta\,S\,I \\
 \dfrac{dI}{dt} &=& \beta\,S\,I-\gamma\,I \\
-\dfrac{dS}{dt} &=&-\gamma \,I
+\dfrac{dR}{dt} &=&-\gamma \,I
 \end{eqnarray}
 
 - Para resolver a EDO utilizou-se a função `ode` do pacote `deSolve`.
