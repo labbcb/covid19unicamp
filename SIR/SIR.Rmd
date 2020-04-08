@@ -10,12 +10,13 @@ knitr::opts_chunk$set(echo = FALSE, fig.pos = "tpbh", fig.width = 10, fig.height
 ```
 
 ```{r leitura_dados, include=FALSE}
-rm(list = ls())
+#rm(list = ls())
 bibs <- c("tidyverse", "knitr", "datacovidbr", "deSolve", "xtable")
 sapply(bibs, require, character.only = T)
 
-wd <- "C:/Users/User/Dropbox/covid19"
-source(file.path(wd, "functions.R"))
+#wd <- "C:/Users/User/Dropbox/covid19"
+#source(file.path(wd, "functions.R"))
+source("functions.R")
 mun <- brasilio()
 wor <- CSSEGISandData()
 ```
@@ -104,6 +105,7 @@ res$plot3 +
 Casos de covid no estado de SP obtidos da iniciativa [Brasil IO](https://www.brasil.io/home).
 
 ```{r dados_estado, echo=FALSE}
+<<<<<<< HEAD
 estado <- mun %>%
   filter(state == "SP", place_type == "state") %>%
   select(date, confirmed, deaths, estimated_population_2019) %>%
@@ -116,6 +118,15 @@ estado <- mun %>%
 
 tb1 = estado %>% 
   select(-pop) %>% 
+=======
+estados <- mun  %>%
+   filter(state == "SP", place_type == "state") %>%
+   select(date, confirmed, deaths) %>%
+   arrange(date) %>%
+   mutate(deaths = ifelse(is.na(deaths), 0, deaths))
+
+tb1 <- estados %>% 
+>>>>>>> aaa164f6407495c9860ca43af5361ddc93704e87
   gather(status, obs, -date) 
 
 ylim <- range(tb1$obs)
@@ -131,10 +142,17 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
 
 ```{r ajuste_estado, echo = FALSE, results='asis'}
 
+<<<<<<< HEAD
 infected <- estado$casos_Acumulados - estado$mortes_Acumuladas
 N        <- estado$pop[1]
 dias     <- estado$date
 obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
+=======
+infected <- estados$confirmed - estados$deaths
+N        <- 44.04*10^6 #pop de 40.04 milhões pela wikipedia
+dias     <- estados$date
+obj      <- fit.model(infected, N = N, parms = c(0.5, 0.5), dates = dias)
+>>>>>>> aaa164f6407495c9860ca43af5361ddc93704e87
 res      <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", 
