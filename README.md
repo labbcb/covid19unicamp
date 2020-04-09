@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Wed Apr  8 11:32:45 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Thu Apr  9 10:54:41 2020).
 
 
 ```r
@@ -44,12 +44,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-08 |São Paulo |      4947|    339|                  12252023|                       40.37701|     0.0685|
 |2020-04-07 |São Paulo |      4258|    296|                  12252023|                       34.75344|     0.0695|
 |2020-04-06 |São Paulo |      3754|    244|                  12252023|                       30.63984|     0.0650|
 |2020-04-05 |São Paulo |      3612|    220|                  12252023|                       29.48085|     0.0609|
 |2020-04-04 |São Paulo |      3496|    212|                  12252023|                       28.53406|     0.0606|
 |2020-04-03 |São Paulo |      3202|    186|                  12252023|                       26.13446|     0.0581|
-|2020-04-02 |São Paulo |      2815|    164|                  12252023|                       22.97580|     0.0583|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
@@ -59,6 +59,15 @@ casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>%
 ```
 
 ![](README_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```r
+casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
+  ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() +
+  theme_bw() + xlab("Data") + ylab("Contagem") +
+  ggtitle("Casos Confirmados e Óbitos na Cidade de São Paulo")
+```
+
+![](README_files/figure-html/unnamed-chunk-2-2.png)<!-- -->
 
 ## Taxas de Mudança
 
