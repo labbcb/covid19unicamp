@@ -19,7 +19,7 @@ RSS.model <- function(parms, init, times, infected)
   names(parms) <- c("beta", "gamma")
   out <- ode(y = init, times = times, func = SIR, parms = parms)
   fit <- out[, 3]
-  ll  <- sum((infected - fit)^2)
+  ll  <- mean((infected - fit)^2)
   return(ll)
 }
 
@@ -34,15 +34,20 @@ fit.model <- function(infected, recovered = 0, N, parms, dates = NULL)
   else{
     times <- 1:length(dates)
   }
+  
+  ## Total de casos por dia
+  cases <- c(infected[1], diff(infected))
+  
   init  <- c(S = N-infected[1], I = infected[1], R = recovered)
   out   <- optim(parms, RSS.model, method = "L-BFGS-B", lower = c(0, 0), upper = c(1, 1), 
-                 init = init, times = times[-1], infected = infected[-1])
+                 init = init, times = times[-1], infected = cases[-1])
   est   <- setNames(out$par, c("beta", "gamma"))
   R0    <- setNames(est["beta"] / est["gamma"], "R0")
   
   # cat(ifelse(out$convergence == 0, "Convegencia obtida", "Convergencia falhou"), "\n")
   
   obj   <- list(infected = infected, 
+                cases    = cases,
                 recovered = recovered, 
                 N = N, 
                 init = init,
@@ -57,7 +62,7 @@ fit.model <- function(infected, recovered = 0, N, parms, dates = NULL)
 
 # Extrai informações do modelo ajustado -----------------------------------
 
-summary.model <- function(obj, h = 50)
+summary.model <- function(obj, h = 60)
 {
   
   tobs  <- obj$times
@@ -98,7 +103,7 @@ summary.model <- function(obj, h = 50)
   p_infec <- ggplot(tb_infec, aes(x = time, y = estimate)) +
     geom_line(size = 1) +
     geom_vline(xintercept = I_max$time, linetype = "dashed") +
-    labs(x = "Dia", y = "Total da Populacao", col = "") +
+    labs(x = "Dia", y = "Total de casos", col = "") +
     theme_bw() +
     theme(text = element_text(size = 14), 
           legend.position = "top")
@@ -108,25 +113,23 @@ summary.model <- function(obj, h = 50)
     p_infec <- p_infec + scale_x_date(date_breaks = "1 week", date_labels = "%d/%b")
   }
   
-
   ## Gráfico preditos versus observados
   tb_inf <- tb_long %>% 
     filter(status == "Infectados") %>% 
-    mutate(obs = c(obj$infected, rep(NA, h))) %>% 
+    mutate(obs = c(obj$cases, rep(NA, h))) %>% 
     filter(!is.na(obs)) %>% 
     select(-status) %>% 
     gather(tipo, valor, -time) %>% 
     mutate(tipo = ifelse(tipo == "obs", "Observado", "Estimado"))
     
-  ylim <- range(c(0, tb_inf$valor))
-  
   p_fit <- ggplot(tb_inf, aes(x = time, y = valor, color = tipo)) +
     geom_point(size = 1) +
     geom_point() +
-    labs(x = "Dia", y = "Total acumulado", col = "") +
+    labs(x = "Dia", y = "Total de casos infectados", col = "") +
     theme_bw() +
     theme(text = element_text(size = 14), 
           legend.position = "top")
+  
   
   if(!is.null(obj$dates))
   {

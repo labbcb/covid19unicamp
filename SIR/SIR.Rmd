@@ -10,13 +10,13 @@ knitr::opts_chunk$set(echo = FALSE, fig.pos = "tpbh", fig.width = 10, fig.height
 ```
 
 ```{r leitura_dados, include=FALSE}
-#rm(list = ls())
+rm(list = ls())
 bibs <- c("tidyverse", "knitr", "datacovidbr", "deSolve", "xtable")
 sapply(bibs, require, character.only = T)
 
-#wd <- "C:/Users/User/Dropbox/covid19"
-#source(file.path(wd, "functions.R"))
-source("functions.R")
+wd <- "C:/Users/User/Dropbox/covid19/covid19unicamp/SIR"
+source(file.path(wd, "functions.R"))
+# source("functions.R")
 mun <- brasilio()
 wor <- CSSEGISandData()
 ```
@@ -53,6 +53,7 @@ por um indivíduo com COVID.
 
 - As curvas de predições consideram $h = 50$ dias após a última data observada.
 
+
 \newpage
 ## Brasil
 Casos de Covid19 obtidos do repositório [CSSEGISandData/COVID-19](https://github.com/CSSEGISandData/COVID-19).
@@ -79,13 +80,12 @@ ggplot(tb1, aes(x = data, y = obs, col = status, fill = status)) +
 
 
 ```{r ajuste_brasil, echo = FALSE, results='asis'}
-
 infected  <- df$casosAcumulados - df$obitosAcumulado
 recovered <- df$recuperadosAcumulado[1]
 N         <- 210000000 # população do pais
 dias      <- df$data
 obj       <- fit.model(infected = infected, recovered = recovered,
-                      N = N, parms = c(0.5, 0.5), dates = dias)
+                       N = N, parms = c(0.5, 0.5), dates = dias)
 res       <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", align = rep("c", 6)),
@@ -114,19 +114,10 @@ estado <- mun %>%
          casos_Acumulados = confirmed,
          mortes_Acumuladas = deaths)
 
-
-tb1 = estado %>%
-  select(-pop) %>%
-estados <- mun  %>%
-   filter(state == "SP", place_type == "state") %>%
-   select(date, confirmed, deaths) %>%
-   arrange(date) %>%
-   mutate(deaths = ifelse(is.na(deaths), 0, deaths))
-
-tb1 <- estados %>%
+tb1 <- estado %>%
+  select(-pop) %>% 
   gather(status, obs, -date)
 
-ylim <- range(tb1$obs)
 ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   geom_line(linetype = "dashed", show.legend = F) +
   geom_point() +
@@ -141,8 +132,8 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
 
 infected <- estado$casos_Acumulados - estado$mortes_Acumuladas
 N        <- 44.04*10^6 #pop de 40.04 milhões pela wikipedia
-dias     <- estados$date
-obj      <- fit.model(infected, N = N, parms = c(0.6, 0.5), dates = dias)
+dias     <- estado$date
+obj      <- fit.model(infected, N = N, parms = c(0.5, 0.5), dates = dias)
 res      <- summary.model(obj)
 
 print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.",
