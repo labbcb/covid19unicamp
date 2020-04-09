@@ -98,6 +98,9 @@ alldata %>% ggplot(aes(date, d2, color=status)) + geom_line() + theme_bw() + xla
 coef(model$fit) %>% knitr::kable()
 ```
 
+Estimativa do pico: `r indata[1,1] + coef(model$fit)[2]`.
+
+
 ## Estado de São Paulo
 
 ```{r, message=FALSE}
@@ -129,4 +132,8 @@ alldata %>% ggplot(aes(date, d2, color=status)) + geom_line() + theme_bw() + xla
 coef(model$fit) %>% knitr::kable()
 ```
 
+Estimativa do pico: `r indata[1,1] + coef(model$fit)[2]`.
 
+## Observação
+
+O modelo precisa ser melhorado, pois as estimativas de pico não estão apropriadas.

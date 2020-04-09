@@ -31,6 +31,8 @@ a velocidade de crescimento da função logística.
 | phi2 |    42.964390 |
 | phi3 |     5.677742 |
 
+Estimativa do pico: 2020-04-08.
+
 ## Estado de São Paulo
 
 ``` r
@@ -57,3 +59,10 @@ indata %>% head() %>% knitr::kable()
 | phi1 | 11245.066449 |
 | phi2 |    41.561301 |
 | phi3 |     5.020329 |
+
+Estimativa do pico: 2020-04-06.
+
+## Observação
+
+O modelo precisa ser melhorado, pois as estimativas de pico não estão
+apropriadas.
