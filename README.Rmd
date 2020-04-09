@@ -42,6 +42,11 @@ casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>%
   ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() + scale_y_log10() +
   theme_bw() + xlab("Data") + ylab("Contagem") +
   ggtitle("Casos Confirmados e Óbitos na Cidade de São Paulo")
+casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
+  ggplot(aes(date, counts, colour=type)) + geom_point() + geom_line() +
+  theme_bw() + xlab("Data") + ylab("Contagem") +
+  ggtitle("Casos Confirmados e Óbitos na Cidade de São Paulo")
+
 ```
 
 ## Taxas de Mudança
