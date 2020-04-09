@@ -7,26 +7,34 @@ SIR <- function(time, state, parms)
   par <- as.list(c(state, parms))
   with(par, {
     dS <- -beta / N * I * S
-    dI <- beta / N * I * S - gamma * I
+    dI <- beta /  N * I * S - gamma * I
     dR <- gamma * I
     list(c(dS, dI, dR))
   })
 }
 
 # Retorna RSS (I - I_hat)^2 ------------------------------------------------
-RSS.model <- function(parms, init, times, infected)
+RSS.model <- function(parms, init, times, infected, recovered=NULL)
 {
   names(parms) <- c("beta", "gamma")
-  out <- ode(y = init, times = times, func = SIR, parms = parms)
-  fit <- out[, 3]
-  ll  <- mean((infected - fit)^2)
+  out   <- ode(y = init, times = times, func = SIR, parms = parms)
+  I_hat <- out[, 3]
+  ll    <- sqrt( mean((infected - I_hat)^2)  )
+  if(!is.null(recovered))
+  {
+    R_hat <- out[, 4]
+    l1    <- sqrt( mean((infected - I_hat)^2)  )
+    l2    <- sqrt( mean((infected - R_hat)^2)  )
+    alpha <- 0.2 ## mais peso para casos recuperados
+    ll    <- alpha * l1 + (1 - alpha) * l2
+  }
   return(ll)
 }
 
 
 # Estima modelo SIR minimizando RSS ---------------------------------------
 
-fit.model <- function(infected, recovered = 0, N, parms, dates = NULL)
+fit.model <- function(infected, recovered = NULL, N, parms, dates = NULL)
 {
   if(is.null(dates)) {
     times <- 1:length(infected)
@@ -34,13 +42,22 @@ fit.model <- function(infected, recovered = 0, N, parms, dates = NULL)
   else{
     times <- 1:length(dates)
   }
+  R_ini <- 0
+  if(!is.null(recovered))
+  {
+    R_ini <- recovered[1]
+  }
   
   ## Total de casos por dia
   cases <- c(infected[1], diff(infected))
   
-  init  <- c(S = N-infected[1], I = infected[1], R = recovered)
-  out   <- optim(parms, RSS.model, method = "L-BFGS-B", lower = c(0, 0), upper = c(1, 1), 
-                 init = init, times = times[-1], infected = cases[-1])
+  ## Condição inicial para EDO
+  init  <- c(S = N-cases[1], I = cases[1], R = R_ini)
+  
+  ## Otimização
+  out   <- optim(parms, RSS.model, method = "L-BFGS-B", lower = c(0, 0), upper = c(1, 1),
+                 init = init, times = times[-1], infected = cases[-1], recovered = recovered)
+  
   est   <- setNames(out$par, c("beta", "gamma"))
   R0    <- setNames(est["beta"] / est["gamma"], "R0")
   
@@ -70,70 +87,71 @@ summary.model <- function(obj, h = 60)
   tpred <- 1:(n + h)
   tb    <- data.frame(ode(y = obj$init, times = tpred, func = SIR, parms = obj$parms))
   
+  RMSE  <- paste0("RMSE = ", round(sqrt(mean( (tb$I[1:n] - obj$cases)^2 )), 2) )
+  
   if(!is.null(obj$dates))
   {
-    dates   <- seq(obj$dates[1], obj$dates[n]+(h), l = n+h)
+    dates   <- seq(obj$dates[1], obj$dates[n] + h, l = n+h)
     tb$time <- dates
   }
-  ## Estima total máximo de infectados e tempo que isso ocorre
+  ## Estima máximo de infectados e tempo que isso ocorre
   I_max <- tb[which.max(tb$I), ][c("I", "time")]
 
   ## Gráfico do comportamento infectados, suscetiveis e recuperados  
   tb_long <- tb %>% 
-    gather(status, estimate, -time) %>% 
-    mutate(status = case_when(status == "I" ~ "Infectados",
-                              status == "R" ~ "Recuperados",
-                              status == "S" ~ "Suscetiveis"))
+    gather(status, estimate, -time) 
+  #   mutate(status = case_when(status == "I" ~ "Infectados",
+  #                             status == "R" ~ "Recuperados",
+  #                             status == "S" ~ "Suscetiveis"))
 
   p_pred <- ggplot(tb_long, aes(x = time, y = estimate, col = status)) +
     geom_line(size = 1) +
     labs(x = "Dia", y = "Total", col = "") +
     theme_bw() +
-    theme(text = element_text(size = 14), legend.position = "top")
+    theme(text = element_text(size = 10), legend.position = "top") 
+    # ggtitle("Predicao do modelo SIR")
+  
   
   if(!is.null(obj$dates))
   {
-    p_pred <- p_pred + scale_x_date(date_breaks = "1 week", date_labels = "%d/%b")
+    p_pred <- p_pred + scale_x_date(date_breaks = "3 week", date_labels = "%d/%b")
   }
   
   ## Gráfico do comportamento de infectados
-  tb_infec <- tb_long %>% 
-    filter(status == "Infectados")
-
-  p_infec <- ggplot(tb_infec, aes(x = time, y = estimate)) +
-    geom_line(size = 1) +
-    geom_vline(xintercept = I_max$time, linetype = "dashed") +
-    labs(x = "Dia", y = "Total de casos", col = "") +
-    theme_bw() +
-    theme(text = element_text(size = 14), 
-          legend.position = "top")
+  p_infec <- tb_long %>% 
+    filter(status == "I") %>% 
+    ggplot(aes(x = time, y = estimate)) +
+      geom_line(size = 1) +
+      geom_vline(xintercept = I_max$time, linetype = "dashed") +
+      labs(x = "Dia", y = "Total de infectados", col = "") +
+      theme_bw() +
+      theme(text = element_text(size = 10), 
+            legend.position = "top") 
+  #ggtitle("Comportamento do total de infectados")
+  
   
   if(!is.null(obj$dates))
   {
-    p_infec <- p_infec + scale_x_date(date_breaks = "1 week", date_labels = "%d/%b")
+    p_infec <- p_infec + scale_x_date(date_breaks = "3 week", date_labels = "%d/%b")
   }
   
   ## Gráfico preditos versus observados
-  tb_inf <- tb_long %>% 
-    filter(status == "Infectados") %>% 
-    mutate(obs = c(obj$cases, rep(NA, h))) %>% 
-    filter(!is.na(obs)) %>% 
-    select(-status) %>% 
-    gather(tipo, valor, -time) %>% 
-    mutate(tipo = ifelse(tipo == "obs", "Observado", "Estimado"))
-    
-  p_fit <- ggplot(tb_inf, aes(x = time, y = valor, color = tipo)) +
-    geom_point(size = 1) +
-    geom_point() +
-    labs(x = "Dia", y = "Total de casos infectados", col = "") +
-    theme_bw() +
-    theme(text = element_text(size = 14), 
-          legend.position = "top")
+  p_fit <- tb_long %>% 
+    filter(status == "I") %>%
+    slice(1:n) %>% 
+    mutate(obs = obj$cases) %>%
+    ggplot(aes(x = time, y = obs)) +
+      geom_point(size = 2) +
+      geom_line(aes(x = time, y = estimate)) +
+      labs(x = "Dia", y = "Total de casos infectados") +
+      theme_bw() +
+      theme(text = element_text(size = 10)) +
+      ggtitle(paste0("Ajuste modelo SIR versus casos observados (", RMSE, ")"))
   
   
   if(!is.null(obj$dates))
   {
-    p_fit <- p_fit + scale_x_date(date_breaks = "1 week", date_labels = "%d/%b")
+    p_fit <- p_fit + scale_x_date(date_breaks = "5 days", date_labels = "%d/%b")
   }
 
   ## Parâmetros estimados

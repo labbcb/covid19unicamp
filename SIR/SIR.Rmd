@@ -1,17 +1,15 @@
 ---
 title: "Covid19 - Modelo SIR"
-author: "André F. B. Menezes"
-date: "04 de abril de 2020"
 output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, fig.pos = "tpbh", fig.width = 10, fig.height = 8, fig.align = "center")
+knitr::opts_chunk$set(echo = FALSE, fig.pos = "tpbh", fig.width = 6, fig.height = 4, fig.align = "center")
 ```
 
 ```{r leitura_dados, include=FALSE}
 rm(list = ls())
-bibs <- c("tidyverse", "knitr", "datacovidbr", "deSolve", "xtable")
+bibs <- c("tidyverse", "knitr", "datacovidbr", "deSolve", "xtable", "gridExtra")
 sapply(bibs, require, character.only = T)
 
 wd <- "C:/Users/User/Dropbox/covid19/covid19unicamp/SIR"
@@ -21,7 +19,7 @@ mun <- brasilio()
 wor <- CSSEGISandData()
 ```
 
-## Considerações do modelo SIR
+## Considerações sobre o modelo SIR
 
 Modelo assume três grupos de pessoas: suscetíveis a doença ($S$), infectadas ($I$) e recuperadas ($R$).
 \begin{figure}[ht]
@@ -51,7 +49,7 @@ por um indivíduo com COVID.
 
 - $I_{\max}$ e $T_{\max}$ são predições do número máximo de infectados e o tempo (data) de ocorrência, respectivamente.
 
-- As curvas de predições consideram $h = 50$ dias após a última data observada.
+- As curvas de predições consideram $h = 60$ dias após a última data observada.
 
 
 \newpage
@@ -63,7 +61,6 @@ df <- wor %>%
   ungroup() %>%
   filter(Country.Region == "Brazil", casosAcumulados > 0)  
 
-
 tb1 = df %>%
   select(-Country.Region, -Lat, -Long) %>%
   gather(status, obs, -data)
@@ -74,7 +71,7 @@ ggplot(tb1, aes(x = data, y = obs, col = status, fill = status)) +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
   scale_x_date(date_breaks = "1 week", date_labels = "%d/%b") +
   theme_bw() +
-  theme(text = element_text(size = 14), legend.position = "top")
+  theme(text = element_text(size = 12), legend.position = "top")
 
 ```
 
@@ -88,15 +85,13 @@ obj       <- fit.model(infected = infected, recovered = recovered,
                        N = N, parms = c(0.5, 0.5), dates = dias)
 res       <- summary.model(obj)
 
-print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do modelo SIR.", align = rep("c", 6)),
+print.xtable(xtable(res$estimates, caption = "Parâmetros estimados do modelo SIR.", align = rep("c", 6)),
              table.placement = "h", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
-res$plot1 +
-  ggtitle("Ajuste modelo SIR versus casos observados")
-res$plot2 +
-  ggtitle("Predições do modelo SIR")
-res$plot3 +
-  ggtitle("Comportamento do total de infectados")
+res$plot1
+
+grid.arrange(res$plot2, res$plot3, nrow = 1)
+
 ```
 
 \newpage
@@ -124,7 +119,7 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
   scale_x_date(date_breaks = "1 week", date_labels = "%d/%b") +
   theme_bw() +
-  theme(text = element_text(size = 14), legend.position = "top")
+  theme(text = element_text(size = 10), legend.position = "top")
 ```
 
 
@@ -141,12 +136,9 @@ print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do m
              table.placement = "ht", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
 
-res$plot1 +
-  ggtitle("Ajuste modelo SIR versus casos observados")
-res$plot2 +
-  ggtitle("Predições do modelo SIR")
-res$plot3 +
-  ggtitle("Comportamento do total de infectados")
+res$plot1
+
+grid.arrange(res$plot2, res$plot3, nrow = 1)
 
 ```
 
@@ -185,7 +177,7 @@ ggplot(tb1, aes(x = date, y = obs, col = status, fill = status)) +
   labs(x = "Dia", y = "Total", col = "", fill= "") +
   scale_x_date(date_breaks = "4 days", date_labels = "%d/%b") +
   theme_bw() +
-  theme(text = element_text(size = 14), legend.position = "top")
+  theme(text = element_text(size = 10), legend.position = "top")
 ```
 
 
@@ -202,13 +194,8 @@ print.xtable(xtable(res$estimates, caption = "Parâmetros estimados via RSS do m
              table.placement = "ht", caption.placement = "top",
              include.rownames = F, comment = F, sanitize.text.function = force)
 
-res$plot1 +
-  ggtitle("Ajuste modelo SIR versus casos observados")
+res$plot1
 
-res$plot2 +
-  ggtitle("Predições do modelo SIR")
-
-res$plot3 +
-  ggtitle("Predição do total de infectados do modelo SIR")
+grid.arrange(res$plot2, res$plot3, nrow = 1)
 
 ```
