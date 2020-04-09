@@ -30,3 +30,30 @@ a velocidade de crescimento da função logística.
 | phi1 | 34291.008570 |
 | phi2 |    42.964390 |
 | phi3 |     5.677742 |
+
+## Estado de São Paulo
+
+``` r
+indata = brasilio() %>%
+  filter(place_type == "state", state=="SP") %>%
+  select(date, confirmed, deaths) %>%
+  ungroup() %>% prepData()
+indata %>% head() %>% knitr::kable()
+```
+
+| date       | confirmed | deaths | d |
+| :--------- | --------: | -----: | -: |
+| 2020-02-25 |         1 |      0 | 0 |
+| 2020-02-26 |         1 |      0 | 1 |
+| 2020-02-27 |         1 |      0 | 2 |
+| 2020-02-28 |         2 |      0 | 3 |
+| 2020-02-29 |         2 |      0 | 4 |
+| 2020-03-01 |         2 |      0 | 5 |
+
+![](logistica_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->![](logistica_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->![](logistica_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
+
+|      |            x |
+| ---- | -----------: |
+| phi1 | 11245.066449 |
+| phi2 |    41.561301 |
+| phi3 |     5.020329 |
