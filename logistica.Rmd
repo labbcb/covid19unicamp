@@ -29,7 +29,8 @@ prepData = function(input)
       select(-day)
 
 fitLogistic = function(input, days_ahead=14){
-  fit = nls(confirmed ~ SSlogis(d, phi1, phi2, phi3), data=input)
+  fit = nls(confirmed ~ SSlogis(d, phi1, phi2, phi3), data=input,
+            control=nls.control(minFactor = 1e-12))
   preds = predFit(fit, newdata=input, interval = "confidence")
   input = input %>% mutate(pred = preds[, 'fit'],
                            lb = preds[, 'lwr'],
@@ -133,6 +134,40 @@ coef(model$fit) %>% knitr::kable()
 ```
 
 Estimativa do pico: `r indata[1,1] + coef(model$fit)[2]`.
+
+## Cidade de Campinas
+
+```{r, message=FALSE}
+indata = brasilio() %>%
+  filter(place_type == "city", state=="SP", city=="Campinas") %>%
+  select(date, confirmed, deaths) %>%
+  ungroup() %>% prepData()
+indata %>% head() %>% knitr::kable()
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
+model = fitLogistic(indata)
+alldata = model$input %>% bind_rows(model$futuro)
+alldata %>% 
+  ggplot(aes(date, confirmed)) +
+  geom_ribbon(aes(ymin=lb, ymax=ub), fill="grey70") +
+  geom_line(aes(y=pred, colour=status)) +
+  geom_point() +
+  theme_bw() +
+  xlab("Data") + ylab("Casos Confirmados")
+
+alldata = alldata %>%
+  mutate(d1 = d1f(d, coef(model$fit)),
+         d2=d2f(d, coef(model$fit)))
+
+alldata %>% ggplot(aes(date, d1, color=status)) + geom_line() + theme_bw() + xlab("Data") + ylab("Derivada 1")
+alldata %>% ggplot(aes(date, d2, color=status)) + geom_line() + theme_bw() + xlab("Data") + ylab("Derivada 2")
+coef(model$fit) %>% knitr::kable()
+```
+
+Estimativa do pico: `r indata[1,1] + coef(model$fit)[2]`.
+
 
 ## Observação
 

@@ -27,11 +27,11 @@ a velocidade de crescimento da função logística.
 
 |      |            x |
 | ---- | -----------: |
-| phi1 | 34291.008570 |
-| phi2 |    42.964390 |
-| phi3 |     5.677742 |
+| phi1 | 42084.911296 |
+| phi2 |    44.880494 |
+| phi3 |     5.931702 |
 
-Estimativa do pico: 2020-04-08.
+Estimativa do pico: 2020-04-10.
 
 ## Estado de São Paulo
 
@@ -56,11 +56,32 @@ indata %>% head() %>% knitr::kable()
 
 |      |            x |
 | ---- | -----------: |
-| phi1 | 11245.066449 |
-| phi2 |    41.561301 |
-| phi3 |     5.020329 |
+| phi1 | 14030.398413 |
+| phi2 |    43.608050 |
+| phi3 |     5.384961 |
 
-Estimativa do pico: 2020-04-06.
+Estimativa do pico: 2020-04-08.
+
+## Cidade de Campinas
+
+``` r
+indata = brasilio() %>%
+  filter(place_type == "city", state=="SP", city=="Campinas") %>%
+  select(date, confirmed, deaths) %>%
+  ungroup() %>% prepData()
+indata %>% head() %>% knitr::kable()
+```
+
+| date       | confirmed | deaths | d |
+| :--------- | --------: | -----: | -: |
+| 2020-03-18 |         1 |     NA | 0 |
+| 2020-03-19 |         1 |     NA | 1 |
+| 2020-03-20 |         1 |     NA | 2 |
+| 2020-03-25 |         4 |      0 | 7 |
+| 2020-03-26 |         4 |      0 | 8 |
+| 2020-03-27 |         5 |      0 | 9 |
+
+Estimativa do pico: 2020-04-30.
 
 ## Observação
 
