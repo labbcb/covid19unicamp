@@ -1,0 +1,280 @@
+---
+title: "Modelo Derivadas"
+author: "Gabriel Franco"
+output: 
+  html_document:
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center")
+
+## Preamble
+library(tidyverse)
+library(datacovidbr) # Thanks to Victor Freguglia
+
+
+## Funções logística e suas derivadas
+d0f <- function(x, p){
+  exp_denom = exp((p[2]-x)/p[3])
+  p[1]/(1+exp_denom)
+}
+d1f = function(x, pars){
+  expterm = exp((pars[2]-x)/pars[3])
+  num = pars[1]*expterm
+  den = pars[3]*((1+expterm)^2)
+  num/den
+}
+
+d2f = function(x, pars){
+  expterm = exp((pars[2]-x)/pars[3])
+  num = pars[1]*expterm*(expterm-1)
+  den = (pars[3]^2)*((expterm+1)^3)
+  num/den
+}
+```
+
+
+## Introdução
+
+Queremos obter a melhor predição para as seguintes curvas ao longo dos dias de casos acumulados, novos casos e crescimento de novos casos, como no exemplo a seguir.
+
+```{r plot_intro}
+## Setup
+my_pars <- c(9000,42,4)
+f0 <- d0f(1:80, my_pars)
+f1 <- d1f(1:80, my_pars)
+f2 <- d2f(1:80, my_pars)
+
+## Plot
+data.frame(Dias = rep(1:80,3),
+           var = rep(factor(c("Acumulados", "Novos casos", "Cresc. Novos Casos"),
+                            levels=c("Acumulados", "Novos casos", "Cresc. Novos Casos")), 
+                        each=80),
+           Valor = c(f0,f1,f2)) %>% 
+  ggplot(aes(Dias,Valor)) +
+  geom_line() +
+  geom_vline(xintercept = 42, linetype=2, alpha=.3) +
+  facet_grid(var~., scales="free_y")
+```
+
+Seja $f(t)$ a curva acumulada de casos, podemos modelar por uma curva logística 
+
+$$
+f(t ; \boldsymbol \Phi) = \frac{\phi_1}{1 + \exp\left\{\frac{\phi_2 - t}{\phi_3}\right\}},
+$$
+
+com $\phi_1$ sendo o número máximo de casos ao longo do tempo, $\phi_2$ o tempo $t$ em que atingimos este número máximo e $1/\phi_3$ sua velocidade de crescimento. No exemplo acima, $\phi_1=9000$, $\phi_2 = 42$ e $\phi_3 = 4$.
+
+Consequentemente, o número de novos casos por dia e seu crescimento são modelados pela primeira e segunda derivada de $f(t)$, respectivamente.
+
+Assim, dado que estamos antes do pico $\phi_2$ e que temos dados de casos acumulados observados, qual a melhor maneira de estimar esses três parâmetros de forma a obter uma boa estimativa de $\phi_2$?
+
+## Proposta
+
+Gostaríamos os parâmetros fossem bons o suficientes para que as três curvas fossem bem ajustadas. Com isso, sejam 
+
+- $d_0(t)$ o número de casos acumulados  observados no tempo $t$,
+- $d_1(t)$ o número de novos casos observados no tempo $t$ e
+- $d_2(t)$ o crescimento observado de novos casos no tempo $t$,
+
+vamos minimizar a função a seguir em relação $\Phi$:
+
+$$
+S(\Phi ; \,w_1,w_2,w_3) 
+= 
+w_1\sum_t \big(f(t;\Phi) - d_0(t)\big)^2 +
+w_2\sum_t \big(f^\prime(t ;\Phi) - d_1(t)\big)^2 +
+w_3\sum_t \big(f^{\prime \prime}(t;\Phi) - d_2(t)\big)^2,
+$$
+
+sendo $w_1,w_2,w_3$ pesos pré-definidos (ou não). A princípio, propõe-se que $w_1$ seja o maior peso de todos para que a curva se ajuste melhor nos casos observados.
+
+## Exemplos
+
+```{r setup_data}
+df <- CSSEGISandData() %>%
+  filter(Country.Region %in% c("China", "Korea, South", "Brazil"),
+         casosAcumulados > 0) %>%
+  group_by(Country.Region) %>%
+  mutate(d1 = c(0, diff(casosAcumulados)), 
+         d2 = c(0, diff(d1)))
+```
+
+```{r setup_opt, echo=TRUE}
+## Acumulados
+d0f <- function(x, p){
+  exp_denom = exp((p[2]-x)/p[3])
+  p[1]/(1+exp_denom)
+}
+
+## Novos casos
+d1f = function(x, pars){
+  expterm = exp((pars[2]-x)/pars[3])
+  num = pars[1]*expterm
+  den = pars[3]*((1+expterm)^2)
+  num/den
+}
+
+## Crescimento novos casos
+d2f = function(x, pars){
+  expterm = exp((pars[2]-x)/pars[3])
+  num = pars[1]*expterm*(expterm-1)
+  den = (pars[3]^2)*((expterm+1)^3)
+  num/den
+}
+
+## Função a ser otimizada
+my_func <- function(pars, data, pesos){
+  days <- seq_along(data$data)
+  data$pred_d1 <- d1f(days, pars)
+  data$pred_d2 <- d2f(days, pars)
+  data$pred_cum <- d0f(days, pars)
+  
+  ssq = pesos[1]* mean((data$pred_d1 - data$d1)^2) +
+    pesos[2]*mean((data$pred_d2 - data$d2)^2) +
+    pesos[3]*mean((data$casosAcumulados - data$pred_cum)^2) 
+  ssq
+}
+
+opt <- function(data, chute, pesos, lim_inf =c(0,0,0)){
+  opt =optim(chute, my_func, data = data, pesos = pesos, lower = lim_inf, hessian=TRUE)
+  
+  dd_pred = data
+  days <- seq_along(dd_pred$data)
+  dd_pred$pred_d1 = d1f(days,opt$par)
+  dd_pred$pred_d2 = d2f(days,opt$par)
+  dd_pred$pred_cum = d0f(days,opt$par)
+  
+  dd_pred = data.frame(data = rep(dd_pred$data,times=3),
+                       var = rep(c("Acumulados","d1","d2"), each=length(days)),
+                       observado = c(dd_pred$casosAcumulados,dd_pred$d1,dd_pred$d2),
+                       estimado = c(dd_pred$pred_cum,dd_pred$pred_d1, dd_pred$pred_d2))
+  p = dd_pred %>% 
+    ggplot(aes(data,observado))+
+    geom_point(alpha=.3)+
+    geom_line(aes(y=estimado))+
+    facet_grid(var~., scales="free_y")
+  
+  list("plot"=p,
+       "pars" = opt$par ,
+       "pred" = dd_pred,
+       "parsSE" = sqrt(abs(diag(solve(opt$hessian)))))
+}
+
+visu <- function(data){
+  days <- seq_along(data$data)
+  data = data.frame( data = rep(seq_along(data$data),times=3),
+                     var = rep(c("Acumulados","d1","d2"), each=length(days)),
+                     observado = c(data$casosAcumulados,data$d1,data$d2))
+  data %>% 
+    ggplot(aes(data,observado))+
+    geom_point()+
+    facet_grid(var~., scales="free_y")
+}
+```
+
+
+
+### Coreia, a referência
+```{r fit_coreia}
+dd_korea <- df %>% 
+  filter(Country.Region=="Korea, South") %>% 
+  mutate(days = seq_along(data))
+
+opt_korea = opt(data = dd_korea, chute = c(12000,42,4), pesos = c(1,2,4))
+opt_korea$plot
+```
+
+### China
+
+O ajuste para China não é tão fácil quanto o da Coreia e precisamos de chutes iniciais melhores. Vejamos os dados observados
+
+```{r obs_china}
+dd_china <- df %>% 
+  filter(Country.Region=="China") %>% 
+  mutate(days = seq_along(data))
+
+visu(dd_china)
+```
+
+Com o gráfico acima, temos uma noção do chute dos parâmetros: $\phi_1 = 83000$ e  $\phi_2=22$. Com isso, temos o resultado abaixo.
+
+```{r fit_china}
+chute_china = c(max(dd_china$casosAcumulados),
+                22,
+                4) ## chute completamente aleatório
+opt_china = opt(data=dd_china,chute = chute_china, pesos=c(1,2,4))
+opt_china$plot
+opt_china$pars
+```
+
+### Brasil
+
+O Brasil é o caso mais difícil pq não sabemos em que pé estamos.
+
+```{r brasil_visu}
+dd_br <- df %>% 
+  filter(Country.Region=="Brazil") %>% 
+  mutate(days = seq_along(data))
+
+visu(dd_br)
+```
+
+Note que a curva de casos acumulados e novos casos não tem nenhuma indicação de que vai começar a desacelerar. Portanto, precisamos limitar os parâmetros conforme conhecimentos prévios e observações de cenários em outros países. Os chutes iniciais são bem ruins a princípio: $\phi_1 = 180000$ e $\phi_2 = 60$.
+
+```{r br_opt}
+chute_br = c(10*max(dd_br$casosAcumulados),
+                60,
+                4) ## chute completamente aleatório
+opt_br = opt(data=dd_br,chute = chute_br, pesos=c(1,2,4), lim_inf = c(0,44,0))
+opt_br$plot
+opt_br$pars
+```
+
+
+Assim, temos o seguinte resultado, sendo a data esperada de pico em `r dd_br$data[1] + opt_br$pars[2]`.
+
+```{r br_pred}
+dd_pred = opt_br$pred
+dd_pred$days = rep(seq_along(unique(dd_pred$data)),3)
+
+futuro = 30
+dias_fut = seq(from=max(dd_pred$days)+1,
+             to=max(dd_pred$days)+futuro)
+dd_append = data.frame(data = rep(rep(dd_pred$data[1],futuro),3), ## inicializando
+                       var = rep(unique(dd_pred$var),each=futuro),
+                       observado = 0,
+                       estimado = c(d0f(dias_fut, opt_br$pars), 
+                                    d1f(dias_fut, opt_br$pars), 
+                                    d2f(dias_fut, opt_br$pars) 
+                                    ),
+                       days = rep(dias_fut,3))
+dd_append$data = dd_br$data[1] + dias_fut
+dd_pred$Dado = "Observado"
+dd_append$Dado = "Predito"
+pred_br = rbind(dd_pred,dd_append)
+pred_br %>% 
+  as.data.frame() %>% 
+  ggplot(aes(data,observado,col=Dado)) +
+  geom_point(alpha=.3) +
+  geom_line(aes(y=estimado)) +
+  facet_grid(var~., scales="free_y")
+```
+
+## Observações e ideias
+
+**Todas as estimativas acima precisam ser melhoradas!**
+
+- Suavizar as curvas melhora as estimativas?
+- Incerteza das estimativas pode ser dada pela Hessiana, mas é ruim
+- Depende muito do chute inicial, principalmente os dois primeiros. 
+
+## A fazer
+
+- Organizar melhor os dados
+- Estudar inferência
+- Testar com a Coreia e China o caso de quando ainda não passamos pelo pico
