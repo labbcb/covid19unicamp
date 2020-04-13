@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sat Apr 11 13:00:47 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Mon Apr 13 11:35:08 2020).
 
 
 ```r
@@ -44,12 +44,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-12 |São Paulo |      6352|    445|                  12252023|                       51.84450|     0.0701|
+|2020-04-11 |São Paulo |      6131|    422|                  12252023|                       50.04072|     0.0688|
 |2020-04-10 |São Paulo |      5982|    409|                  12252023|                       48.82459|     0.0684|
 |2020-04-09 |São Paulo |      5477|    384|                  12252023|                       44.70282|     0.0701|
 |2020-04-08 |São Paulo |      4947|    339|                  12252023|                       40.37701|     0.0685|
 |2020-04-07 |São Paulo |      4258|    296|                  12252023|                       34.75344|     0.0695|
-|2020-04-06 |São Paulo |      3754|    244|                  12252023|                       30.63984|     0.0650|
-|2020-04-05 |São Paulo |      3612|    220|                  12252023|                       29.48085|     0.0609|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
