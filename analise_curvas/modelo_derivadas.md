@@ -6,26 +6,15 @@ output:
     keep_md: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
-                      warning = FALSE,
-                      message = FALSE,
-                      fig.align = "center")
 
-## Preamble
-library(tidyverse)
-library(datacovidbr) # Thanks to Victor Freguglia
-source("src/functions.R")
-
-
-```
 
 
 ## Introdução
 
 Queremos obter a melhor predição para as seguintes curvas ao longo dos dias de casos acumulados, novos casos e crescimento de novos casos, como no exemplo a seguir.
 
-```{r plot_intro}
+
+```r
 ## Setup
 my_pars <- c(9000,42,4)
 f0 <- d0f(1:80, my_pars)
@@ -43,6 +32,8 @@ data.frame(Dias = rep(1:80,3),
   geom_vline(xintercept = 42, linetype=2, alpha=.3) +
   facet_grid(var~., scales="free_y")
 ```
+
+<img src="modelo_derivadas_files/figure-html/plot_intro-1.png" style="display: block; margin: auto;" />
 
 Seja $f(t)$ a curva acumulada de casos, podemos modelar por uma curva logística 
 
@@ -78,7 +69,8 @@ sendo $w_1,w_2,w_3$ pesos pré-definidos (ou não). A princípio, propõe-se que
 
 ## Exemplos
 
-```{r setup_data}
+
+```r
 df <- CSSEGISandData() %>%
   filter(Country.Region %in% c("China", "Korea, South", "Brazil"),
          casosAcumulados > 0) %>%
@@ -89,7 +81,8 @@ df <- CSSEGISandData() %>%
 
 
 ### Coreia, a referência
-```{r fit_coreia}
+
+```r
 dd_korea <- df %>% 
   filter(Country.Region=="Korea, South") %>% 
   mutate(days = seq_along(data))
@@ -101,11 +94,14 @@ opt_korea = opt(data = dd_korea,
 opt_korea$plot
 ```
 
+<img src="modelo_derivadas_files/figure-html/fit_coreia-1.png" style="display: block; margin: auto;" />
+
 ### China
 
 O ajuste para China não é tão fácil quanto o da Coreia e precisamos de chutes iniciais melhores. Vejamos os dados observados
 
-```{r obs_china}
+
+```r
 dd_china <- df %>% 
   filter(Country.Region=="China") %>% 
   mutate(days = seq_along(data))
@@ -113,22 +109,35 @@ dd_china <- df %>%
 visu(dd_china)
 ```
 
+<img src="modelo_derivadas_files/figure-html/obs_china-1.png" style="display: block; margin: auto;" />
+
 Com o gráfico acima, temos uma noção do chute dos parâmetros: $\phi_1 = 83000$ e  $\phi_2=22$. Com isso, temos o resultado abaixo.
 
-```{r fit_china}
+
+```r
 chute_china = c(max(dd_china$casosAcumulados),
                 22,
                 4) ## chute completamente aleatório
 opt_china = opt(data=dd_china,chute = chute_china, pesos=c(1,2,4))
 opt_china$plot
+```
+
+<img src="modelo_derivadas_files/figure-html/fit_china-1.png" style="display: block; margin: auto;" />
+
+```r
 opt_china$pars
+```
+
+```
+## [1] 81659.416751    18.894187     4.614867
 ```
 
 ### Brasil
 
 O Brasil é o caso mais difícil pq não sabemos em que pé estamos.
 
-```{r brasil_visu}
+
+```r
 dd_br <- df %>% 
   filter(Country.Region=="Brazil") %>% 
   mutate(days = seq_along(data))
@@ -136,9 +145,12 @@ dd_br <- df %>%
 visu(dd_br)
 ```
 
+<img src="modelo_derivadas_files/figure-html/brasil_visu-1.png" style="display: block; margin: auto;" />
+
 Note que a curva de casos acumulados e novos casos não tem nenhuma indicação de que vai começar a desacelerar. Portanto, precisamos limitar os parâmetros conforme conhecimentos prévios e observações de cenários em outros países. Os chutes iniciais são bem ruins a princípio: $\phi_1 = 180000$ e $\phi_2 = 60$.
 
-```{r br_opt}
+
+```r
 chute_br = c(220000,#10*max(dd_br$casosAcumulados),
              60,
              4) ## chute completamente aleatório
@@ -146,10 +158,13 @@ opt_br = opt(data=dd_br,chute = chute_br, pesos=c(1,2,4), lim_inf = c(0,44,0))
 opt_br$plot
 ```
 
+<img src="modelo_derivadas_files/figure-html/br_opt-1.png" style="display: block; margin: auto;" />
 
-Assim, dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_br$data[1] + opt_br$pars[2]`, com um total de casos estimados em `r round(opt_br$pars[1])` (muito perto do chute inicial).
 
-```{r br_pred}
+Assim, dados os chutes iniciais e os dados que temos, a data esperada de pico em 2020-05-01, com um total de casos estimados em 2.2\times 10^{5} (muito perto do chute inicial).
+
+
+```r
 dd_pred = opt_br$pred
 dd_pred$days = rep(seq_along(unique(dd_pred$data)),3)
 
@@ -175,6 +190,8 @@ pred_br %>%
   geom_line(aes(y=estimado)) +
   facet_grid(var~., scales="free_y")
 ```
+
+<img src="modelo_derivadas_files/figure-html/br_pred-1.png" style="display: block; margin: auto;" />
 
 # Estudo preditivo
 
