@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       warning = FALSE,
                       message = FALSE,
                       fig.align = "center")
+options(scipen=999)
 
 ## Preamble
 library(tidyverse)
@@ -21,7 +22,7 @@ source("src/functions.R")
 ```
 
 
-## Introdução
+# Introdução
 
 Queremos obter a melhor predição para as seguintes curvas ao longo dos dias de casos acumulados, novos casos e crescimento de novos casos, como no exemplo a seguir.
 
@@ -56,7 +57,7 @@ Consequentemente, o número de novos casos por dia e seu crescimento são modela
 
 Assim, dado que estamos antes do pico $\phi_2$ e que temos dados de casos acumulados observados, qual a melhor maneira de estimar esses três parâmetros de forma a obter uma boa estimativa de $\phi_2$?
 
-## Proposta
+# Proposta
 
 Gostaríamos os parâmetros fossem bons o suficientes para que as três curvas fossem bem ajustadas. Com isso, sejam 
 
@@ -76,7 +77,7 @@ $$
 
 sendo $w_1,w_2,w_3$ pesos pré-definidos (ou não). A princípio, propõe-se que $w_1$ seja o maior peso de todos para que a curva se ajuste melhor nos casos observados.
 
-## Exemplos
+# Exemplos
 
 ```{r setup_data}
 df <- CSSEGISandData() %>%
@@ -88,7 +89,7 @@ df <- CSSEGISandData() %>%
 ```
 
 
-### Coreia, a referência
+## Coreia, a referência
 ```{r fit_coreia}
 dd_korea <- df %>% 
   filter(Country.Region=="Korea, South") %>% 
@@ -101,7 +102,7 @@ opt_korea = opt(data = dd_korea,
 opt_korea$plot
 ```
 
-### China
+## China
 
 O ajuste para China não é tão fácil quanto o da Coreia e precisamos de chutes iniciais melhores. Vejamos os dados observados
 
@@ -124,7 +125,7 @@ opt_china$plot
 opt_china$pars
 ```
 
-### Brasil
+## Brasil
 
 O Brasil é o caso mais difícil pq não sabemos em que pé estamos.
 
@@ -146,8 +147,11 @@ opt_br = opt(data=dd_br,chute = chute_br, pesos=c(1,2,4), lim_inf = c(0,44,0))
 opt_br$plot
 ```
 
+### Predição 
 
-Assim, dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_br$data[1] + opt_br$pars[2]`, com um total de casos estimados em `r round(opt_br$pars[1])` (muito perto do chute inicial).
+Dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_br$data[1] + opt_br$pars[2]`, com um total de casos estimados em `r round(opt_br$pars[1])` (muito perto do chute inicial).
+
+
 
 ```{r br_pred}
 dd_pred = opt_br$pred
@@ -175,6 +179,14 @@ pred_br %>%
   geom_line(aes(y=estimado)) +
   facet_grid(var~., scales="free_y")
 ```
+
+### Resumo
+
+- Data esperada de pico:  `r dd_br$data[1] + opt_br$pars[2]`
+- Número estimado de máximo de casos em um dia: `r round(max(d1f(dias_fut, opt_br$pars)))`
+
+
+****
 
 # Estudo preditivo
 

@@ -9,7 +9,7 @@ output:
 
 
 
-## Introdução
+# Introdução
 
 Queremos obter a melhor predição para as seguintes curvas ao longo dos dias de casos acumulados, novos casos e crescimento de novos casos, como no exemplo a seguir.
 
@@ -47,7 +47,7 @@ Consequentemente, o número de novos casos por dia e seu crescimento são modela
 
 Assim, dado que estamos antes do pico $\phi_2$ e que temos dados de casos acumulados observados, qual a melhor maneira de estimar esses três parâmetros de forma a obter uma boa estimativa de $\phi_2$?
 
-## Proposta
+# Proposta
 
 Gostaríamos os parâmetros fossem bons o suficientes para que as três curvas fossem bem ajustadas. Com isso, sejam 
 
@@ -67,7 +67,7 @@ $$
 
 sendo $w_1,w_2,w_3$ pesos pré-definidos (ou não). A princípio, propõe-se que $w_1$ seja o maior peso de todos para que a curva se ajuste melhor nos casos observados.
 
-## Exemplos
+# Exemplos
 
 
 ```r
@@ -80,7 +80,7 @@ df <- CSSEGISandData() %>%
 ```
 
 
-### Coreia, a referência
+## Coreia, a referência
 
 ```r
 dd_korea <- df %>% 
@@ -96,7 +96,7 @@ opt_korea$plot
 
 <img src="modelo_derivadas_files/figure-html/fit_coreia-1.png" style="display: block; margin: auto;" />
 
-### China
+## China
 
 O ajuste para China não é tão fácil quanto o da Coreia e precisamos de chutes iniciais melhores. Vejamos os dados observados
 
@@ -129,10 +129,10 @@ opt_china$pars
 ```
 
 ```
-## [1] 81659.416751    18.894187     4.614867
+## [1] 81692.810467    18.899681     4.618908
 ```
 
-### Brasil
+## Brasil
 
 O Brasil é o caso mais difícil pq não sabemos em que pé estamos.
 
@@ -160,8 +160,11 @@ opt_br$plot
 
 <img src="modelo_derivadas_files/figure-html/br_opt-1.png" style="display: block; margin: auto;" />
 
+### Predição 
 
-Assim, dados os chutes iniciais e os dados que temos, a data esperada de pico em 2020-05-01, com um total de casos estimados em 2.2\times 10^{5} (muito perto do chute inicial).
+Dados os chutes iniciais e os dados que temos, a data esperada de pico em 2020-05-02, com um total de casos estimados em 220000 (muito perto do chute inicial).
+
+
 
 
 ```r
@@ -192,6 +195,14 @@ pred_br %>%
 ```
 
 <img src="modelo_derivadas_files/figure-html/br_pred-1.png" style="display: block; margin: auto;" />
+
+### Resumo
+
+- Data esperada de pico:  2020-05-02
+- Número estimado de máximo de casos em um dia: 6227
+
+
+****
 
 # Estudo preditivo
 
