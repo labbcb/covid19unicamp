@@ -1,0 +1,78 @@
+---
+title: "Pico de infectados em Campinas"
+author: "Gabriel Franco"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk[["set"]](echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center")
+options(scipen=999)
+
+## Preamble
+library(tidyverse)
+library(datacovidbr) # Thanks to Victor Freguglia
+source("src/functions.R")
+```
+
+# Objetivo e introdução
+
+O objetivo é estimar quando teremos o pico de infectados em um mesmo dia na cidade de Campinas, usando os dados por cidades da [iniciativa Brasil.io](https://brasil.io/dataset/covid19/caso), via [pacote no R `datacovidbr` de Victor Freguglia](https://github.com/Freguglia/datacovidbr).
+
+A predição é realizada ajustando um modelo simultâneo para os casos acumulados, confirmados e a diferença de casos confirmados. Matematicamente, se considerarmos os casos acumulados como nossa função principal, os casos confirmados e a diferença de casos são sua primeira e segunda derivadas, respectivamente. [Para mais detalhes, veja aqui](http://bcblab.org/covid19unicamp/analise_curvas/modelo_derivadas.html).
+
+# Situação atual
+
+A situação atual da cidade de Campinas é a seguinte:
+
+```{r atual}
+dd = brasilio(silent=TRUE) %>% 
+  arrange(date) %>% 
+  filter(city=="Campinas") %>% 
+  mutate(casosAcumulados = cumsum(confirmed),
+         d1 = confirmed,
+         d2 = c(0, diff(d1))
+  ) %>% 
+  select(data=date, casosAcumulados, d1, d2)
+visu(dd, FALSE)
+```
+
+# Predição
+
+Usando o modelo de predição mencionado vamos estimar o dia e o número de máximo infectados em Campinas.
+
+
+## Futuro previsto
+
+O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul. Em seguida, uma tabela indicando a data prevista de pico e o número estimado.
+
+```{r futuro}
+chute_campinas = c(1200000 * .1, # 10% da pop
+                   40,
+                   3)
+optCampinas = opt(dd,
+                  chute = chute_campinas,
+                  pesos = c(.01,1,.01),
+                  lim_inf = c(0,26,0))
+
+futuro(optCampinas, n_fut = 40)           
+```
+
+### Resumo
+
+- Pico esperado: `r format(dd$data[1] + optCampinas$pars[2], "%d/%B, %Y")`
+- Número estimado de máximo de casos em um dia: `r round(max(d1f(1:100, optCampinas[["pars"]])))`
+
+## Ajuste nos dados
+
+Este gráfico mostra o ajuste do modelo nos dados atuais. É importante que todas as curvas estejam bem ajustadas em cada painel.
+
+```{r pred}
+optCampinas$plot
+```
