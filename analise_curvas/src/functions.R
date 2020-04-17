@@ -91,13 +91,43 @@ opt <- function(data, chute, pesos, lim_inf =c(0,0,0), use_log=FALSE, log_base =
        "parsSE" = sqrt(abs(diag(solve(opt$hessian)))))
 }
 
-visu <- function(data){
-  days <- seq_along(data$data)
-  data = data.frame( data = rep(seq_along(data$data),times=3),
-                     var = rep(c("Acumulados","d1","d2"), each=length(days)),
+visu <- function(data, useData = TRUE){
+  if(useData)
+    days <- data$data
+  else
+    days <- seq_along(data$data)
+  data = data.frame( data = rep(days,times=3),
+                     var = rep(c("Acumulados","Confirmados (d1)","Dif. Dia Ant. (d2)"), each=length(days)),
                      observado = c(data$casosAcumulados,data$d1,data$d2))
   data %>% 
     ggplot(aes(data,observado))+
     geom_point()+
+    facet_grid(var~., scales="free_y")
+}
+
+futuro <- function(optObj, n_fut=30){
+  dd_pred = optObj[["pred"]]
+  dd_pred[["days"]] = rep(seq_along(unique(dd_pred[["data"]])),3)
+  
+  futuro = n_fut
+  dias_fut = seq(from=max(dd_pred[["days"]])+1,
+                 to=max(dd_pred[["days"]])+futuro)
+  dd_append = data.frame(data = rep(rep(dd_pred[["data"]][1],futuro),3), ## inicializando
+                         var = rep(unique(dd_pred[["var"]]),each=futuro),
+                         observado = 0,
+                         estimado = c(d0f(dias_fut, optObj[["pars"]]), 
+                                      d1f(dias_fut, optObj[["pars"]]), 
+                                      d2f(dias_fut, optObj[["pars"]]) 
+                         ),
+                         days = rep(dias_fut,3))
+  dd_append[["data"]] =  max(optObj$pred$data)+seq_along(dias_fut)
+  dd_pred[["Dado"]] = "Observado"
+  dd_append[["Dado"]] = "Predito"
+  pred_br = rbind(dd_pred,dd_append)
+  pred_br %>% 
+    as.data.frame() %>% 
+    ggplot(aes(data,observado,col=Dado)) +
+    geom_point(alpha=.3) +
+    geom_line(aes(y=estimado)) +
     facet_grid(var~., scales="free_y")
 }

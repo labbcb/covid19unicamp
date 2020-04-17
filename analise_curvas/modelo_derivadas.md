@@ -29,46 +29,46 @@ data.frame(Dias = rep(1:80,3),
 
 <img src="modelo_derivadas_files/figure-gfm/plot_intro-1.png" style="display: block; margin: auto;" />
 
-Seja $f(t)$ a curva acumulada de casos, podemos modelar por uma curva
+Seja \(f(t)\) a curva acumulada de casos, podemos modelar por uma curva
 logística
 
-$$
+\[
 f(t ; \boldsymbol \Phi) = \frac{\phi_1}{1 + \exp\left\{\frac{\phi_2 - t}{\phi_3}\right\}},
-$$
+\]
 
-com $\phi_1$ sendo o número máximo de casos ao longo do tempo,
-$\phi_2$ o tempo $t$ em que atingimos este número máximo e
-$1/\phi_3$ sua velocidade de crescimento. No exemplo acima,
-$\phi_1=9000$, $\phi_2 = 42$ e $\phi_3 = 4$.
+com \(\phi_1\) sendo o número máximo de casos ao longo do tempo,
+\(\phi_2\) o tempo \(t\) em que atingimos este número máximo e
+\(1/\phi_3\) sua velocidade de crescimento. No exemplo acima,
+\(\phi_1=9000\), \(\phi_2 = 42\) e \(\phi_3 = 4\).
 
 Consequentemente, o número de novos casos por dia e seu crescimento são
-modelados pela primeira e segunda derivada de $f(t)$, respectivamente.
+modelados pela primeira e segunda derivada de \(f(t)\), respectivamente.
 
-Assim, dado que estamos antes do pico $\phi_2$ e que temos dados de
+Assim, dado que estamos antes do pico \(\phi_2\) e que temos dados de
 casos acumulados observados, qual a melhor maneira de estimar esses três
-parâmetros de forma a obter uma boa estimativa de $\phi_2$?
+parâmetros de forma a obter uma boa estimativa de \(\phi_2\)?
 
 # Proposta
 
 Gostaríamos os parâmetros fossem bons o suficientes para que as três
 curvas fossem bem ajustadas. Com isso, sejam
 
-  - $d_0(t)$ o número de casos acumulados observados no tempo $t$,
-  - $d_1(t)$ o número de novos casos observados no tempo $t$ e
-  - $d_2(t)$ o crescimento observado de novos casos no tempo $t$,
+  - \(d_0(t)\) o número de casos acumulados observados no tempo \(t\),
+  - \(d_1(t)\) o número de novos casos observados no tempo \(t\) e
+  - \(d_2(t)\) o crescimento observado de novos casos no tempo \(t\),
 
-vamos minimizar a função a seguir em relação $\Phi$:
+vamos minimizar a função a seguir em relação \(\Phi\):
 
-$$
+\[
 S(\Phi ; \,w_1,w_2,w_3) 
 = 
 w_1\sum_t \big(f(t;\Phi) - d_0(t)\big)^2 +
 w_2\sum_t \big(f^\prime(t ;\Phi) - d_1(t)\big)^2 +
 w_3\sum_t \big(f^{\prime \prime}(t;\Phi) - d_2(t)\big)^2,
-$$
+\]
 
-sendo $w_1,w_2,w_3$ pesos pré-definidos (ou não). A princípio,
-propõe-se que $w_1$ seja o maior peso de todos para que a curva se
+sendo \(w_1,w_2,w_3\) pesos pré-definidos (ou não). A princípio,
+propõe-se que \(w_1\) seja o maior peso de todos para que a curva se
 ajuste melhor nos casos observados.
 
 # Exemplos
@@ -114,7 +114,7 @@ visu(dd_china)
 <img src="modelo_derivadas_files/figure-gfm/obs_china-1.png" style="display: block; margin: auto;" />
 
 Com o gráfico acima, temos uma noção do chute dos parâmetros:
-$\phi_1 = 83000$ e $\phi_2=22$. Com isso, temos o resultado abaixo.
+\(\phi_1 = 83000\) e \(\phi_2=22\). Com isso, temos o resultado abaixo.
 
 ``` r
 chute_china = c(max(dd_china[["casosAcumulados"]]),
@@ -150,7 +150,7 @@ Note que a curva de casos acumulados e novos casos não tem nenhuma
 indicação de que vai começar a desacelerar. Portanto, precisamos limitar
 os parâmetros conforme conhecimentos prévios e observações de cenários
 em outros países. Os chutes iniciais são bem ruins a princípio:
-$\phi_1 = 180000$ e $\phi_2 = 60$.
+\(\phi_1 = 180000\) e \(\phi_2 = 60\).
 
 ``` r
 chute_br = c(220000,#10*max(dd_br$casosAcumulados),

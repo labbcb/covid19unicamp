@@ -2,7 +2,11 @@
 title: "Modelo Derivadas"
 author: "Gabriel Franco"
 output:
-  github_document
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: "hide"
+latex_engine: lualatex
 ---
 
 ```{r setup, include=FALSE}
@@ -187,13 +191,13 @@ pred_br %>%
 
 ****
 
-# Estudo preditivo
+<!-- # Estudo preditivo -->
 
-Vamos estudar os casos de China e Coreia e verificar em quantos dias antes do pico é possível estimá-lo com melhor precisão.
+<!-- Vamos estudar os casos de China e Coreia e verificar em quantos dias antes do pico é possível estimá-lo com melhor precisão. -->
 
-## O experimento
+<!-- ## O experimento -->
 
-Em construção...
+<!-- Em construção... -->
 
 
 # Observações e ideias

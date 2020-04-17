@@ -29,38 +29,38 @@ data.frame(Dias = rep(1:80,3),
 
 <img src="modelo_derivadas_files/figure-gfm/plot_intro-1.png" style="display: block; margin: auto;" />
 
-Seja <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/27099e26220f898359382d05f75b941c.svg?invert_in_darkmode" align=middle width=28.539060000000003pt height=24.65759999999998pt/> a curva acumulada de casos, podemos modelar por uma curva
+Seja <img src="svgs/27099e26220f898359382d05f75b941c.svg?invert_in_darkmode" align=middle width=28.539060000000003pt height=24.65759999999998pt/> a curva acumulada de casos, podemos modelar por uma curva
 logística
 
-<p align="center"><img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/087aefba3674b63de09b83f2526144c8.svg?invert_in_darkmode" align=middle width=191.51385pt height=50.317245pt/></p>
+<p align="center"><img src="svgs/087aefba3674b63de09b83f2526144c8.svg?invert_in_darkmode" align=middle width=191.51385pt height=50.317245pt/></p>
 
-com <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/648af807e14f1259d294a13819fd4d1e.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> sendo o número máximo de casos ao longo do tempo,
-<img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> o tempo <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/> em que atingimos este número máximo e
-<img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/5713eac7b5d6d965791ce29a1891e186.svg?invert_in_darkmode" align=middle width=32.7855pt height=24.65759999999998pt/> sua velocidade de crescimento. No exemplo acima,
-<img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/0207863831d63dfc0d420fce53480bd4.svg?invert_in_darkmode" align=middle width=71.963595pt height=22.831379999999992pt/>, <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/cdfbdf69d9b63b4e3cfd45e5f95df92b.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/> e <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/f4ea60c3008c6d6485e6a96f114e0c45.svg?invert_in_darkmode" align=middle width=47.30583pt height=22.831379999999992pt/>.
+com <img src="svgs/648af807e14f1259d294a13819fd4d1e.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> sendo o número máximo de casos ao longo do tempo,
+<img src="svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> o tempo <img src="svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/> em que atingimos este número máximo e
+<img src="svgs/5713eac7b5d6d965791ce29a1891e186.svg?invert_in_darkmode" align=middle width=32.7855pt height=24.65759999999998pt/> sua velocidade de crescimento. No exemplo acima,
+<img src="svgs/0207863831d63dfc0d420fce53480bd4.svg?invert_in_darkmode" align=middle width=71.963595pt height=22.831379999999992pt/>, <img src="svgs/cdfbdf69d9b63b4e3cfd45e5f95df92b.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/> e <img src="svgs/f4ea60c3008c6d6485e6a96f114e0c45.svg?invert_in_darkmode" align=middle width=47.30583pt height=22.831379999999992pt/>.
 
 Consequentemente, o número de novos casos por dia e seu crescimento são
-modelados pela primeira e segunda derivada de <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/27099e26220f898359382d05f75b941c.svg?invert_in_darkmode" align=middle width=28.539060000000003pt height=24.65759999999998pt/>, respectivamente.
+modelados pela primeira e segunda derivada de <img src="svgs/27099e26220f898359382d05f75b941c.svg?invert_in_darkmode" align=middle width=28.539060000000003pt height=24.65759999999998pt/>, respectivamente.
 
-Assim, dado que estamos antes do pico <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> e que temos dados de
+Assim, dado que estamos antes do pico <img src="svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/> e que temos dados de
 casos acumulados observados, qual a melhor maneira de estimar esses três
-parâmetros de forma a obter uma boa estimativa de <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/>?
+parâmetros de forma a obter uma boa estimativa de <img src="svgs/e8c65b8d4ccca28b6729b706fc85c469.svg?invert_in_darkmode" align=middle width=16.347210000000004pt height=22.831379999999992pt/>?
 
 # Proposta
 
 Gostaríamos os parâmetros fossem bons o suficientes para que as três
 curvas fossem bem ajustadas. Com isso, sejam
 
-  - <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/6912d7bdfdcd150df8520a69a02cef85.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o número de casos acumulados observados no tempo <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/>,
-  - <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/ee87b7d752fac334a1b3b505595de9b7.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o número de novos casos observados no tempo <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/> e
-  - <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/9adfaa163a0ec720f200f135b373479c.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o crescimento observado de novos casos no tempo <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/>,
+  - <img src="svgs/6912d7bdfdcd150df8520a69a02cef85.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o número de casos acumulados observados no tempo <img src="svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/>,
+  - <img src="svgs/ee87b7d752fac334a1b3b505595de9b7.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o número de novos casos observados no tempo <img src="svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/> e
+  - <img src="svgs/9adfaa163a0ec720f200f135b373479c.svg?invert_in_darkmode" align=middle width=34.65198pt height=24.65759999999998pt/> o crescimento observado de novos casos no tempo <img src="svgs/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode" align=middle width=5.936155500000004pt height=20.222069999999988pt/>,
 
-vamos minimizar a função a seguir em relação <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/5e16cba094787c1a10e568c61c63a5fe.svg?invert_in_darkmode" align=middle width=11.872245000000005pt height=22.46574pt/>:
+vamos minimizar a função a seguir em relação <img src="svgs/5e16cba094787c1a10e568c61c63a5fe.svg?invert_in_darkmode" align=middle width=11.872245000000005pt height=22.46574pt/>:
 
-<p align="center"><img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/7832f959587b32c3111327d0faebb100.svg?invert_in_darkmode" align=middle width=700.2748499999999pt height=36.228555pt/></p>
+<p align="center"><img src="svgs/7832f959587b32c3111327d0faebb100.svg?invert_in_darkmode" align=middle width=700.2748499999999pt height=36.228555pt/></p>
 
-sendo <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/c40772ff536329321c04e98faf3fa7bf.svg?invert_in_darkmode" align=middle width=71.218785pt height=14.155350000000013pt/> pesos pré-definidos (ou não). A princípio,
-propõe-se que <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4b4518f1b7f0fb1347fa21506ebafb19.svg?invert_in_darkmode" align=middle width=18.321105000000006pt height=14.155350000000013pt/> seja o maior peso de todos para que a curva se
+sendo <img src="svgs/c40772ff536329321c04e98faf3fa7bf.svg?invert_in_darkmode" align=middle width=71.218785pt height=14.155350000000013pt/> pesos pré-definidos (ou não). A princípio,
+propõe-se que <img src="svgs/4b4518f1b7f0fb1347fa21506ebafb19.svg?invert_in_darkmode" align=middle width=18.321105000000006pt height=14.155350000000013pt/> seja o maior peso de todos para que a curva se
 ajuste melhor nos casos observados.
 
 # Exemplos
@@ -106,7 +106,7 @@ visu(dd_china)
 <img src="modelo_derivadas_files/figure-gfm/obs_china-1.png" style="display: block; margin: auto;" />
 
 Com o gráfico acima, temos uma noção do chute dos parâmetros:
-<img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/eb5d9fec8d61d73ba65de472a361950d.svg?invert_in_darkmode" align=middle width=80.18274000000001pt height=22.831379999999992pt/> e <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/7be71ed53b50fdc6f2f7355dd88d0b4e.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/>. Com isso, temos o resultado abaixo.
+<img src="svgs/eb5d9fec8d61d73ba65de472a361950d.svg?invert_in_darkmode" align=middle width=80.18274000000001pt height=22.831379999999992pt/> e <img src="svgs/7be71ed53b50fdc6f2f7355dd88d0b4e.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/>. Com isso, temos o resultado abaixo.
 
 ``` r
 chute_china = c(max(dd_china[["casosAcumulados"]]),
@@ -142,7 +142,7 @@ Note que a curva de casos acumulados e novos casos não tem nenhuma
 indicação de que vai começar a desacelerar. Portanto, precisamos limitar
 os parâmetros conforme conhecimentos prévios e observações de cenários
 em outros países. Os chutes iniciais são bem ruins a princípio:
-<img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/a51061288db09a7e3584414e08eccb1f.svg?invert_in_darkmode" align=middle width=88.401885pt height=22.831379999999992pt/> e <img src="https://raw.githubusercontent.com/labbcb/covid19unicamp/master/analise_curvas/svgs/4c98647d8d8ddfb67993f4d8147439c1.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/>.
+<img src="svgs/a51061288db09a7e3584414e08eccb1f.svg?invert_in_darkmode" align=middle width=88.401885pt height=22.831379999999992pt/> e <img src="svgs/4c98647d8d8ddfb67993f4d8147439c1.svg?invert_in_darkmode" align=middle width=55.52514pt height=22.831379999999992pt/>.
 
 ``` r
 chute_br = c(220000,#10*max(dd_br$casosAcumulados),
