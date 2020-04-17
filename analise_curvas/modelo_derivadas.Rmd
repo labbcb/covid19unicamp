@@ -2,12 +2,11 @@
 title: "Modelo Derivadas"
 author: "Gabriel Franco"
 output:
-  html_document:
-    keep_md: yes
+  github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE,
+knitr::opts_chunk[["set"]](echo = TRUE,
                       warning = FALSE,
                       message = FALSE,
                       fig.align = "center")
@@ -99,7 +98,7 @@ opt_korea = opt(data = dd_korea,
                 chute = c(10000,30,1), 
                 pesos = c(0.01,0.01,5), 
                 log=TRUE)
-opt_korea$plot
+opt_korea[["plot"]]
 ```
 
 ## China
@@ -117,12 +116,12 @@ visu(dd_china)
 Com o gráfico acima, temos uma noção do chute dos parâmetros: $\phi_1 = 83000$ e  $\phi_2=22$. Com isso, temos o resultado abaixo.
 
 ```{r fit_china}
-chute_china = c(max(dd_china$casosAcumulados),
+chute_china = c(max(dd_china[["casosAcumulados"]]),
                 22,
                 4) ## chute completamente aleatório
 opt_china = opt(data=dd_china,chute = chute_china, pesos=c(1,2,4))
-opt_china$plot
-opt_china$pars
+opt_china[["plot"]]
+opt_china[["pars"]]
 ```
 
 ## Brasil
@@ -144,33 +143,33 @@ chute_br = c(220000,#10*max(dd_br$casosAcumulados),
              60,
              4) ## chute completamente aleatório
 opt_br = opt(data=dd_br,chute = chute_br, pesos=c(1,2,4), lim_inf = c(0,44,0))
-opt_br$plot
+opt_br[["plot"]]
 ```
 
 ### Predição 
 
-Dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_br$data[1] + opt_br$pars[2]`, com um total de casos estimados em `r round(opt_br$pars[1])` (muito perto do chute inicial).
+Dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_br[["data"]][1] + opt_br[["pars"]][2]`, com um total de casos estimados em `r round(opt_br[["pars"]][1])` (muito perto do chute inicial).
 
 
 
 ```{r br_pred}
-dd_pred = opt_br$pred
-dd_pred$days = rep(seq_along(unique(dd_pred$data)),3)
+dd_pred = opt_br[["pred"]]
+dd_pred[["days"]] = rep(seq_along(unique(dd_pred[["data"]])),3)
 
 futuro = 30
-dias_fut = seq(from=max(dd_pred$days)+1,
-             to=max(dd_pred$days)+futuro)
-dd_append = data.frame(data = rep(rep(dd_pred$data[1],futuro),3), ## inicializando
-                       var = rep(unique(dd_pred$var),each=futuro),
+dias_fut = seq(from=max(dd_pred[["days"]])+1,
+             to=max(dd_pred[["days"]])+futuro)
+dd_append = data.frame(data = rep(rep(dd_pred[["data"]][1],futuro),3), ## inicializando
+                       var = rep(unique(dd_pred[["var"]]),each=futuro),
                        observado = 0,
-                       estimado = c(d0f(dias_fut, opt_br$pars), 
-                                    d1f(dias_fut, opt_br$pars), 
-                                    d2f(dias_fut, opt_br$pars) 
+                       estimado = c(d0f(dias_fut, opt_br[["pars"]]), 
+                                    d1f(dias_fut, opt_br[["pars"]]), 
+                                    d2f(dias_fut, opt_br[["pars"]]) 
                                     ),
                        days = rep(dias_fut,3))
-dd_append$data = dd_br$data[1] + dias_fut
-dd_pred$Dado = "Observado"
-dd_append$Dado = "Predito"
+dd_append[["data"]] = dd_br[["data"]][1] + dias_fut
+dd_pred[["Dado"]] = "Observado"
+dd_append[["Dado"]] = "Predito"
 pred_br = rbind(dd_pred,dd_append)
 pred_br %>% 
   as.data.frame() %>% 
@@ -182,8 +181,8 @@ pred_br %>%
 
 ### Resumo
 
-- Data esperada de pico:  `r dd_br$data[1] + opt_br$pars[2]`
-- Número estimado de máximo de casos em um dia: `r round(max(d1f(dias_fut, opt_br$pars)))`
+- Data esperada de pico:  `r dd_br[["data"]][1] + opt_br[["pars"]][2]`
+- Número estimado de máximo de casos em um dia: `r round(max(d1f(dias_fut, opt_br[["pars"]])))`
 
 
 ****
