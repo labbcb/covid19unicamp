@@ -11,7 +11,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Thu Apr 16 17:35:09 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Fri Apr 17 16:35:19 2020).
 
 
 ```r
@@ -44,12 +44,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-16 |São Paulo |      7908|    603|                  12252023|                       64.54444|     0.0763|
 |2020-04-15 |São Paulo |      7764|    558|                  12252023|                       63.36913|     0.0719|
 |2020-04-14 |São Paulo |      6705|    512|                  12252023|                       54.72566|     0.0764|
 |2020-04-13 |São Paulo |      6418|    456|                  12252023|                       52.38319|     0.0711|
 |2020-04-12 |São Paulo |      6352|    445|                  12252023|                       51.84450|     0.0701|
 |2020-04-11 |São Paulo |      6131|    422|                  12252023|                       50.04072|     0.0688|
-|2020-04-10 |São Paulo |      5982|    409|                  12252023|                       48.82459|     0.0684|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
