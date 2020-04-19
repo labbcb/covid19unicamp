@@ -10,7 +10,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Fri Apr 17 16:35:19 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sun Apr 19 12:42:17 2020).
 
 
 ```r
@@ -43,12 +43,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
+|2020-04-18 |São Paulo |      9428|    686|                  12252023|                       76.95056|     0.0728|
+|2020-04-17 |São Paulo |      8744|    643|                  12252023|                       71.36781|     0.0735|
 |2020-04-16 |São Paulo |      7908|    603|                  12252023|                       64.54444|     0.0763|
 |2020-04-15 |São Paulo |      7764|    558|                  12252023|                       63.36913|     0.0719|
 |2020-04-14 |São Paulo |      6705|    512|                  12252023|                       54.72566|     0.0764|
 |2020-04-13 |São Paulo |      6418|    456|                  12252023|                       52.38319|     0.0711|
-|2020-04-12 |São Paulo |      6352|    445|                  12252023|                       51.84450|     0.0701|
-|2020-04-11 |São Paulo |      6131|    422|                  12252023|                       50.04072|     0.0688|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
@@ -76,16 +76,9 @@ temp = casos_sp %>% select(date, confirmed, deaths) %>% arrange(date) %>%
   mutate(dx=as.integer(date-lag(date, default=date[1])),
          dconf=confirmed-lag(confirmed, default=confirmed[1]),
          rate = dconf/dx)
-ggplot(temp, aes(date, rate)) + geom_line() + geom_point() +
+ggplot(temp, aes(date, weight=rate)) + geom_bar() +
+  xlab("Data") + ylab("Número de Novos Casos") +
   theme_bw()
-```
-
-```
-## Warning: Removed 1 row(s) containing missing values (geom_path).
-```
-
-```
-## Warning: Removed 1 rows containing missing values (geom_point).
 ```
 
 ![](README_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
