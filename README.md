@@ -10,7 +10,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sun Apr 19 12:42:17 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Sun Apr 19 12:54:00 2020).
 
 
 ```r
@@ -77,7 +77,7 @@ temp = casos_sp %>% select(date, confirmed, deaths) %>% arrange(date) %>%
          dconf=confirmed-lag(confirmed, default=confirmed[1]),
          rate = dconf/dx)
 ggplot(temp, aes(date, weight=rate)) + geom_bar() +
-  xlab("Data") + ylab("Número de Novos Casos") +
+  xlab("Data") + ylab("Taxa de Novos Casos") +
   theme_bw()
 ```
 

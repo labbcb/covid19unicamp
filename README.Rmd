@@ -56,7 +56,7 @@ temp = casos_sp %>% select(date, confirmed, deaths) %>% arrange(date) %>%
          dconf=confirmed-lag(confirmed, default=confirmed[1]),
          rate = dconf/dx)
 ggplot(temp, aes(date, weight=rate)) + geom_bar() +
-  xlab("Data") + ylab("Número de Novos Casos") +
+  xlab("Data") + ylab("Taxa de Novos Casos") +
   theme_bw()
 ```
 
