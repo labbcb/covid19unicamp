@@ -4,7 +4,9 @@ pkgs <- c(
   "ggplot2",
   "shiny",
   "shinydashboard",
-  "devtools"
+  "devtools",
+  "brazilmaps",
+  "sf"
 )
 
 install.packages(pkgs, repos = "https://cran.rstudio.com")
