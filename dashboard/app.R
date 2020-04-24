@@ -58,7 +58,7 @@ server <- function(input, output) {
 
   output$info_deaths = renderInfoBox({
     infoBox(
-      "Óbitos", last(data_city$deaths), icon=icon("bible"), color="red"
+      "Óbitos", last(data_city$deaths), icon=icon("procedures"), color="red"
     )
   })
   
@@ -103,6 +103,7 @@ server <- function(input, output) {
     this_map = map_data %>%
       ggplot(aes_string(fill=opt_type)) + geom_sf() +
       theme_minimal() +
+      theme(legend.title = element_blank()) +
       scale_fill_gradientn(colours=pal)
     this_title = switch(opt_type,
                         confirmed1m="Casos confirmados por milhão de habitantes",
@@ -118,7 +119,7 @@ ui <- dashboardPage(
   dashboardHeader(title = "COVID-19"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Campinas", tabName="campinas", icon=icon("map")),
+      menuItem("Campinas", tabName="campinas", icon=icon("street-view")),
       menuItem("São Paulo", tabName="saopaulo", icon=icon("city")),
       menuItem("Brasil", tabName = "brasil", icon=icon("globe-americas"))
     )
