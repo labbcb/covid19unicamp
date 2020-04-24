@@ -189,6 +189,82 @@ pred_br %>%
 - Número estimado de máximo de casos em um dia: `r round(max(d1f(dias_fut, opt_br[["pars"]])))`
 
 
+## Estado SP
+
+Analisando os dados do estado de SP segundo o ministério da saúde
+
+```{r sp_visu}
+dd_sp <- brMinisterioSaude() 
+dd_sp <- dd_sp %>% 
+  filter(estado=="SP") %>% 
+  mutate(days = seq_along(data),
+         date = as.Date(as.character(date), format="%d-%m-%y"),
+         casosAcumulados = as.numeric(casosAcumulados),
+         d1 =obitosAcumulados,
+         d2 = diff(c(0,d1))) %>% 
+  rename(data=date)
+visu(dd_sp)
+```
+
+Note que a curva de casos acumulados e novos casos também não tem nenhuma indicação de que vai começar a desacelerar. Portanto, precisamos limitar os parâmetros conforme conhecimentos prévios e observações de cenários em outros países. Os chutes iniciais são proporcionais à população do estado e e no observado no gráfico acima.
+
+```{r sp_opt}
+chute_sp = c(120000,#10*max(dd_br$casosAcumulados),
+             120,
+             4) ## chute completamente aleatório
+opt_sp = opt(data=dd_sp,chute = chute_sp, pesos=c(1,5,3), lim_inf = c(110000,80,0))
+opt_sp[["plot"]]
+```
+
+### Predição 
+
+Dados os chutes iniciais e os dados que temos, a data esperada de pico em `r dd_sp[["data"]][1] + opt_sp[["pars"]][2]`, com um total de casos estimados em `r round(opt_sp[["pars"]][1])` (muito perto do chute inicial).
+
+
+
+```{r sp_pred}
+dd_pred = opt_sp[["pred"]]
+dd_pred[["days"]] = rep(seq_along(unique(dd_pred[["data"]])),3)
+
+futuro = 30
+dias_fut = seq(from=max(dd_pred[["days"]])+1,
+             to=max(dd_pred[["days"]])+futuro)
+dd_append = data.frame(data = rep(rep(dd_pred[["data"]][1],futuro),3), ## inicializando
+                       var = rep(unique(dd_pred[["var"]]),each=futuro),
+                       observado = 0,
+                       estimado = c(d0f(dias_fut, opt_sp[["pars"]]), 
+                                    d1f(dias_fut, opt_sp[["pars"]]), 
+                                    d2f(dias_fut, opt_sp[["pars"]]) 
+                                    ),
+                       days = rep(dias_fut,3))
+dd_append[["data"]] = dd_sp[["data"]][1] + dias_fut
+dd_pred[["Dado"]] = "Observado"
+dd_append[["Dado"]] = "Predito"
+pred_sp = rbind(dd_pred,dd_append)
+pred_sp %>% 
+  as.data.frame() %>% 
+  ggplot(aes(data,observado,col=Dado)) +
+  geom_point(alpha=.3) +
+  geom_line(aes(y=estimado)) +
+  facet_grid(var~., scales="free_y")
+```
+
+### Resumo
+
+- Data esperada de pico:  `r dd_sp[["data"]][1] + opt_sp[["pars"]][2]`
+- Número estimado de máximo de casos em um dia: `r round(max(d1f(dias_fut, opt_sp[["pars"]])))`
+
+
+****
+
+<!-- # Estudo preditivo -->
+
+<!-- Vamos estudar os casos de China e Coreia e verificar em quantos dias antes do pico é possível estimá-lo com melhor precisão. -->
+
+<!-- ## O experimento -->
+
+<!-- Em construção... -->
+
 ****
 
 <!-- # Estudo preditivo -->
