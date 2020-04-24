@@ -1,0 +1,132 @@
+---
+title: "COVID-19"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    source_code: https://github.com/labbcb/covid19unicamp
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+source("data_functions.R")
+source("plot_functions.R")
+
+data <- load_data()
+data_state <- get_data_state(data)
+data_city <- get_data_city(data)
+map_data <- calc_map_data(data)
+```
+
+Campinas {data-icon="fa-street-view"}
+=====================================
+
+Row
+-------------------------------------
+
+### Confirmados {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(last(data_city$confirmed),
+           icon = "fa-plus-square",
+           color = "orange")
+})
+```
+
+### Óbitos {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(last(data_city$deaths),
+           icon = "fa-procedures",
+           color = "red")
+})
+```
+
+Row
+-------------------------------------
+
+### Números acumulados de casos confirmados e mortes por data
+
+```{r}
+plot_accumulated_day(data_city)
+```
+
+### Taxa de aumento em relação ao dia anterior
+
+```{r}
+plot_tax_increase(data_city)
+```
+
+Estado de Sao Paulo {data-icon="fa-city"}
+=====================================
+
+Row
+-------------------------------------
+
+### Confirmados {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(last(data_state$confirmed),
+           icon = "fa-plus-square",
+           color = "orange")
+})
+```
+
+### Óbitos {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(last(data_state$deaths),
+           icon = "fa-procedures",
+           color = "red")
+})
+```
+
+Row
+-------------------------------------
+
+### Números acumulados de casos confirmados e mortes por data
+
+```{r}
+plot_accumulated_day(data_state)
+```
+
+### Taxa de aumento em relação ao dia anterior
+
+```{r}
+plot_tax_increase(data_state)
+```
+
+Brasil {data-icon="fa-globe-americas"}
+=====================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+radioButtons(
+  "mapBrChoice",
+  "Métrica:",
+  c(
+    "Casos Confirmados" = "confirmed1m",
+    "Óbitos" = "deaths1m",
+    "CFR" = "CFR"
+  )
+)
+```
+
+Column
+-----------------------------------------------------------------------
+
+### Mapa
+
+```{r}
+renderPlot({
+  plot_brazil_map(map_data, input$mapBrChoice)
+})
+```
+

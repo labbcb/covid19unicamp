@@ -12,14 +12,14 @@ Rscript install_packages.R
 - tidyr
 - ggplot2
 - shiny
-- shinydashboard
+- flexdashboard
 - devtools
 - [datacovidbr](https://github.com/freguglia/datacovidbr)
 
 Iniciar aplicação Shiny.
 
 ```bash
-R -e "shiny::runApp('.')"
+R -e "rmarkdown::run()"
 ```
 
 Para mais informações veja <https://shiny.rstudio.com/articles/running.html>.

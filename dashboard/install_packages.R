@@ -3,7 +3,7 @@ pkgs <- c(
   "tidyr",
   "ggplot2",
   "shiny",
-  "shinydashboard",
+  "flexdashboard",
   "devtools",
   "brazilmaps",
   "sf"
