@@ -3,13 +3,17 @@ library(sf)
 ## considerar pacote geobr para mapa estatico
 
 ## either data from get_data_state or get_data_city
-plot_accumulated_day <- function(data) {
+plot_cumulative_cases <- function(data) {
   data %>%
     gather(type, counts,-date) %>%
     ggplot(aes(x = date, y = counts, color = type)) +
     geom_line() +
     geom_point() +
-    labs(x = "Data", y = "Contagem", color = "Tipo")
+    labs(x = "Data", y = "Contagem", color = "Tipo") +
+    theme_minimal() +
+    scale_color_discrete(labels=c("Casos Confirmados", "Óbitos"),
+                         name="") +
+    theme(legend.position = "bottom")
 }
 
 ## either data from get_data_state or get_data_city

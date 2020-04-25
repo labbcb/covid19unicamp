@@ -51,7 +51,7 @@ Row
 ### Números acumulados de casos confirmados e mortes por data
 
 ```{r}
-plot_accumulated_day(data_city)
+plot_cumulative_cases(data_city)
 ```
 
 ### Taxa de aumento em relação ao dia anterior
@@ -92,7 +92,7 @@ Row
 ### Números acumulados de casos confirmados e mortes por data
 
 ```{r}
-plot_accumulated_day(data_state)
+plot_cumulative_cases(data_state)
 ```
 
 ### Taxa de aumento em relação ao dia anterior

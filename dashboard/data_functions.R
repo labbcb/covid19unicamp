@@ -30,14 +30,14 @@ calc_map_data <- function(data) {
 
 get_data_state <- function(data, keep_state = "SP") {
   data %>%
-    filter(place_type == "state" & state == keep_state) %>%
+    filter(place_type == "state", state == keep_state) %>%
     select(date, confirmed, deaths) %>%
     mutate(deaths = ifelse(is.na(deaths), 0, deaths))
 }
 
 get_data_city <- function(data, keep_city = "Campinas") {
   data %>%
-    filter(place_type == "city" & city == keep_city) %>%
+    filter(place_type == "city", city == keep_city) %>%
     select(date, confirmed, deaths) %>%
     mutate(deaths = ifelse(is.na(deaths), 0, deaths))
 }
