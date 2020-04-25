@@ -1,19 +1,15 @@
-library(ggplot2)
 library(sf)
+library(highcharter)
+library(ggplot2)
 ## considerar pacote geobr para mapa estatico
 
 ## either data from get_data_state or get_data_city
 plot_cumulative_cases <- function(data) {
   data %>%
-    gather(type, counts,-date) %>%
-    ggplot(aes(x = date, y = counts, color = type)) +
-    geom_line() +
-    geom_point() +
-    labs(x = "Data", y = "Contagem", color = "Tipo") +
-    theme_minimal() +
-    scale_color_discrete(labels=c("Casos Confirmados", "Óbitos"),
-                         name="") +
-    theme(legend.position = "bottom")
+    gather(type, counts,-date)  %>%
+    mutate(type = ifelse(type == "confirmed", "Casos confirmados", "Mortes")) %>%
+    rename(Contagem = counts, Data = date) %>%
+    hchart("line", hcaes(Data, Contagem, group = type))
 }
 
 ## either data from get_data_state or get_data_city
@@ -23,12 +19,10 @@ plot_tax_increase <- function(data) {
     mutate(
       dx = as.integer(date - lag(date, default = date[1])),
       dconf = confirmed - lag(confirmed, default = confirmed[1]),
-      rate = dconf / dx
+      Taxa = dconf / dx
     ) %>%
-    ggplot(aes(date, rate)) +
-    geom_line() +
-    geom_point() +
-    labs(x = "Data", y = "Taxa")
+    rename(Data = date) %>%
+    hchart("line", hcaes(Data, Taxa))
 }
 
 plot_brazil_map <- function(map_data, opt_type) {
