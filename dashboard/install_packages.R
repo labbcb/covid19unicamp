@@ -2,6 +2,7 @@ pkgs <- c(
   "dplyr",
   "tidyr",
   "ggplot2",
+  "highcharter",
   "shiny",
   "flexdashboard",
   "devtools",

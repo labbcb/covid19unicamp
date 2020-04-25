@@ -11,6 +11,7 @@ Rscript install_packages.R
 - dplyr
 - tidyr
 - ggplot2
+- highcharter
 - shiny
 - flexdashboard
 - devtools
