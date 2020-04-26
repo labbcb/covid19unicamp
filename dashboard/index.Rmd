@@ -135,50 +135,11 @@ Mapas (Fase: alpha) {data-icon="fa-map-marked-alt"}
 =====================================
 
 ```{r}
-
-get_pallete = function(this_var, scheme="RdYlBu", nbins=5, this_rev=TRUE){
-  bins = quantile(na.omit(this_var),
-                  seq(0, 1, length.out=nbins+1))
-  colorBin(scheme, domain=this_var, bins=bins,
-           reverse=this_rev, right=TRUE)  
-}
-
-get_labels = function(cities, values){
-  values = round(values, 2)
-  values = sprintf("%0.2f", values)
-  values[values == "NA"] = "N/A"
-  values = str_replace(values, "\\.", ",")
-  sprintf("<strong>%s</strong><br/>%s casos / 100.000 habitantes", cities, values ) %>%
-    lapply(htmltools::HTML)
-}
-
-pal = get_pallete(dyn_map_data$confirmed_per_100k_inhabitants)
-labels = get_labels(dyn_map_data$name_muni, dyn_map_data$confirmed_per_100k_inhabitants)
-
-leaflet(dyn_map_data) %>% 
-  addTiles() %>% 
-  addPolygons( fillColor = ~pal(confirmed_per_100k_inhabitants),
-               weight = 2,
-               opacity = 1,
-               color = "white",
-               dashArray = "3",
-               fillOpacity = 0.7,
-               highlight = highlightOptions(
-                 weight = 5,
-                 color = "#666",
-                 dashArray = "",
-                 fillOpacity = 0.7,
-                 bringToFront = TRUE),
-               label = labels,
-               labelOptions = labelOptions(
-                 style = list("font-weight" = "normal", padding = "3px 8px"),
-                 textsize = "15px",
-                 direction = "auto")) %>% 
-  addLegend(pal = pal,
-            values = ~confirmed_per_100k_inhabitants,
-            labFormat = labelFormat(digits = 2, big.mark="."),
-            opacity = 0.7,
-            title = "",
-            position = "bottomright")
+create_dyn_map(dyn_map_data, "confirmed_per_100k_inhabitants") %>% 
+  addLayersControl(
+    baseGroups = c("Casos confirmados por 100 mil habitantes",
+                   "Casos confirmados",
+                   "Óbitos")
+  )
 ```
 

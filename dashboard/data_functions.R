@@ -68,5 +68,6 @@ get_data_munic_from_state = function(data, keep_state="SP", keep_year=2018){
   mun = suppressMessages(read_municipality(code_muni=keep_state, year=keep_year, showProgress = FALSE))
   mun =  mun %>%
       left_join(cidades, by=c("code_muni"="city_ibge_code"))
+  mun = mun %>% select(-abbrev_state, -state, -city, -place_type, -is_last)
   as(mun, "Spatial")
 }
