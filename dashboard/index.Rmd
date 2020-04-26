@@ -143,11 +143,8 @@ Mapas (Fase: alpha) {data-icon="fa-map-marked-alt"}
 =====================================
 
 ```{r}
-create_dyn_map(dyn_map_data, "confirmed_per_100k_inhabitants") %>% 
-  addLayersControl(
-    baseGroups = c("Casos confirmados por 100 mil habitantes",
-                   "Casos confirmados",
-                   "Óbitos")
-  )
+renderLeaflet({
+   create_dyn_map(dyn_map_data, "confirmed_per_100k_inhabitants") 
+})
 ```
 

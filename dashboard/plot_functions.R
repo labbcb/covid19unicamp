@@ -82,11 +82,11 @@ create_dyn_map = function(input, var){
                   style=list("font-weight"="normal", padding="3px 8px"),
                   textsize = "15px", direction = "auto")) %>% 
     addLegend(pal=pal, values=form2, opacity=0.7, title="",
-              labFormat = labelFormat(digits=2),
               position = "bottomright")
 }
 
 create_dyn_map2 = function(input, var){
+  ## a ideia era poder trocar as variaveis que dao os valores das cores
   pal = get_pallete(input[[var]])
   labels = get_labels(input[["name_muni"]],
                       input[[var]])
