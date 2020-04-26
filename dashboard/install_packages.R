@@ -7,7 +7,10 @@ pkgs <- c(
   "flexdashboard",
   "devtools",
   "brazilmaps",
-  "sf"
+  "sf",
+  "leaflet",
+  "geobr",
+  "stringr"
 )
 
 install.packages(pkgs, repos = "https://cran.rstudio.com")

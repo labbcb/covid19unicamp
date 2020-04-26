@@ -6,7 +6,7 @@ library(brazilmaps)
 ## necessarios para mapa dinamico
 library(sf)
 library(geobr)
-library(tidyverse)
+library(stringr)
 
 load_data <- function() {
   brasilio(silent = TRUE) %>%
