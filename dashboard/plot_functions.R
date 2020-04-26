@@ -1,7 +1,10 @@
 library(sf)
 library(highcharter)
 library(ggplot2)
-## considerar pacote geobr para mapa estatico
+
+## usando estes pkgs para o mapa dinamico
+library(leaflet)
+
 
 ## either data from get_data_state or get_data_city
 plot_cumulative_cases <- function(data) {

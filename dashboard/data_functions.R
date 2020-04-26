@@ -3,6 +3,11 @@ library(tidyr)
 library(datacovidbr)
 library(brazilmaps)
 
+## necessarios para mapa dinamico
+library(sf)
+library(geobr)
+library(tidyverse)
+
 load_data <- function() {
   brasilio(silent = TRUE) %>%
     arrange(date)
@@ -52,4 +57,16 @@ get_today_increase_text <- function(x) {
   percent_value <- ceiling(new_value / last(x) * 100)
   percent_text <- paste0("(+", percent_value, "%)")
   paste("+", new_value, percent_text)
+}
+
+
+### Dados para mapa dinamico no estado de SP
+
+get_data_munic_from_state = function(data, keep_state="SP", keep_year=2018){
+  cidades = data %>%
+    filter(place_type == "city", state==keep_state, is_last)
+  mun = suppressMessages(read_municipality(code_muni=keep_state, year=keep_year, showProgress = FALSE))
+  mun =  mun %>%
+      left_join(cidades, by=c("code_muni"="city_ibge_code"))
+  as(mun, "Spatial")
 }
