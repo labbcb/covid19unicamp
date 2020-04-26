@@ -14,6 +14,10 @@ Rscript install_packages.R
 - highcharter
 - shiny
 - flexdashboard
+- brazilmaps
+- sf
+- leaflet
+- geobr
 - devtools
 - [datacovidbr](https://github.com/freguglia/datacovidbr)
 

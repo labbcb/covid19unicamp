@@ -17,7 +17,15 @@ data <- load_data()
 data_state <- get_data_state(data)
 data_city <- get_data_city(data)
 map_data <- calc_map_data(data)
-dyn_map_data = get_data_munic_from_state(data, "SP", 2018)
+
+if (file.exists("dados_municipios.rds")) {
+  require(geobr)
+  dados_municipios <- readRDS("dados_municipios.rds")
+} else {
+  dados_municipios = read_municipality(code_muni="SP", year=2018, showProgress = FALSE)
+  saveRDS(dados_municipios, "dados_municipios.rds")
+}
+dyn_map_data = get_data_munic_from_state(data, "SP", dados_municipios)
 ```
 
 Campinas {data-icon="fa-street-view"}
