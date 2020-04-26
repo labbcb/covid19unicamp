@@ -1,5 +1,5 @@
 library(sf)
-library(highcharter)
+## library(highcharter)
 library(ggplot2)
 
 ## usando estes pkgs para o mapa dinamico
@@ -27,7 +27,9 @@ plot_tax_increase <- function(data) {
       Taxa = dconf / dx
     ) %>%
     rename(Data = date) %>%
-    hchart("line", hcaes(Data, Taxa))
+    ggplot(aes(Data)) + 
+    geom_bar(aes(weight=Taxa)) +
+    theme_minimal()
 }
 
 plot_brazil_map <- function(map_data, opt_type) {
@@ -47,6 +49,8 @@ plot_brazil_map <- function(map_data, opt_type) {
 get_pallete = function(this_var, scheme="RdYlGn", nbins=5, this_rev=TRUE){
   bins = quantile(na.omit(this_var),
                   seq(0, 1, length.out = nbins + 1))
+  bins[1] = floor(bins[1])
+  bins[nbins+1] = ceiling(bins[nbins+1])
   bins = unique(round(bins, 0))
   colorBin(scheme, domain=this_var, bins=bins,
            reverse=this_rev, right=TRUE)  
