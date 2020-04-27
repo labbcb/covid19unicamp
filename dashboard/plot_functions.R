@@ -9,26 +9,25 @@ library(leaflet)
 ## either data from get_data_state or get_data_city
 plot_cumulative_cases <- function(data) {
   data %>%
+    select(date, confirmed, deaths) %>% 
     gather(type, counts, -date)  %>%
-    mutate(type = ifelse(type == "confirmed", "Casos confirmados", "Mortes")) %>%
+    mutate(type = ifelse(type == "confirmed", "Casos Confirmados", "Óbitos")) %>%
     rename(Contagem = counts, Data = date) %>%
     ggplot(aes(Data, Contagem, colour=type)) +
-      geom_line() + geom_point() +
-      theme_minimal() + theme(legend.position = "bottom")
+    geom_point() +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    scale_color_discrete(name="")
 }
 
 ## either data from get_data_state or get_data_city
-plot_tax_increase <- function(data) {
+plot_daily_cases <- function(data) {
   data %>%
     select(-deaths) %>%
-    mutate(
-      dx = as.integer(date - lag(date, default = date[1])),
-      dconf = confirmed - lag(confirmed, default = confirmed[1]),
-      Taxa = dconf / dx
-    ) %>%
-    rename(Data = date) %>%
+    rename(Data = date, Casos=confirmed_day) %>%
     ggplot(aes(Data)) + 
-    geom_bar(aes(weight=Taxa)) +
+    geom_bar(aes(weight=Casos)) +
+    ylab("Novos Casos por Dia") +
     theme_minimal()
 }
 

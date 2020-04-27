@@ -57,16 +57,16 @@ renderValueBox({
 Row
 -------------------------------------
 
-### Números acumulados de casos confirmados e mortes por data
+### Casos e Óbitos até a Presente Data
 
 ```{r}
 plot_cumulative_cases(data_city)
 ```
 
-### Taxa de aumento em relação ao dia anterior
+### Casos Diários
 
 ```{r}
-plot_tax_increase(data_city)
+plot_daily_cases(data_city)
 ```
 
 Estado de Sao Paulo {data-icon="fa-city"}
@@ -98,16 +98,16 @@ renderValueBox({
 Row
 -------------------------------------
 
-### Números acumulados de casos confirmados e mortes por data
+### Casos e Óbitos até a Presente Data
 
 ```{r}
 plot_cumulative_cases(data_state)
 ```
 
-### Taxa de aumento em relação ao dia anterior
+### Casos Diários
 
 ```{r}
-plot_tax_increase(data_state)
+plot_daily_cases(data_state)
 ```
 
 Brasil {data-icon="fa-globe-americas"}

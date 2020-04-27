@@ -9,7 +9,11 @@ library(stringr)
 
 load_data <- function() {
   brasilio(silent = TRUE) %>%
-    arrange(date)
+    group_by(place_type, state, city) %>%
+    arrange(place_type, state, city, date) %>%
+    mutate(confirmed_day=confirmed - lag(confirmed, n=1, default=0),
+           deaths_day=deaths - lag(deaths, n=1, default = 0)) %>% 
+    ungroup()
 }
 
 calc_map_data <- function(data) {
@@ -35,14 +39,14 @@ calc_map_data <- function(data) {
 get_data_state <- function(data, keep_state = "SP") {
   data %>%
     filter(place_type == "state", state == keep_state) %>%
-    select(date, confirmed, deaths) %>%
+    select(date, confirmed, deaths, confirmed_day, deaths_day) %>%
     mutate(deaths = ifelse(is.na(deaths), 0, deaths))
 }
 
 get_data_city <- function(data, keep_city = "Campinas") {
   data %>%
     filter(place_type == "city", city == keep_city) %>%
-    select(date, confirmed, deaths) %>%
+    select(date, confirmed, deaths, confirmed_day, deaths_day) %>%
     mutate(deaths = ifelse(is.na(deaths), 0, deaths))
 }
 
