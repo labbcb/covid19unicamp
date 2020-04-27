@@ -80,6 +80,18 @@ gauge(data_state %>% getCFR(), min=0, max=100, symbol="%",
       my_sectors)
 ```
 
+### CFR Brasil
+
+```{r}
+brasilCFR = data %>%
+  filter(place_type == "state", is_last) %>%
+  select(confirmed, deaths) %>%
+  summarise(CFR=round(sum(deaths)/sum(confirmed)*100, 2)) %>% 
+  pull()
+gauge(brasilCFR, min=0, max=100, symbol="%",
+      my_sectors)
+```
+
 
 Row
 -------------------------------------
