@@ -54,6 +54,33 @@ renderValueBox({
 })
 ```
 
+### CFR Campinas
+
+```{r}
+cfrWHO = 3.4
+
+getCFR = function(input){
+  input %>% ungroup() %>% arrange(date) %>% tail(n=1) %>% 
+    mutate(CFR=round(deaths/confirmed * 100, 2)) %>% pull()
+}
+
+my_sectors = gaugeSectors(success=c(0, cfrWHO),
+                        warning = c(cfrWHO+0.01, 2*cfrWHO),
+                        danger = c(2*cfrWHO + 0.01, 100))
+
+gauge(data_city %>% getCFR(), min=0,
+      max=100, symbol="%", my_sectors)
+```
+
+
+### CFR Estado de SP
+
+```{r}
+gauge(data_state %>% getCFR(), min=0, max=100, symbol="%",
+      my_sectors)
+```
+
+
 Row
 -------------------------------------
 
