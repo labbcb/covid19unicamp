@@ -18,6 +18,7 @@ options(scipen=999)
 ## Preamble
 library(tidyverse)
 library(datacovidbr) # Thanks to Victor Freguglia
+library(covid19peakfit)
 source("src/functions.R")
 ```
 
@@ -39,8 +40,12 @@ dd = brasilio(silent=TRUE) %>%
          d1 = confirmed,
          d2 = c(0, diff(d1))
   ) %>% 
-  select(data=date, casosAcumulados, d1, d2)
-visu(dd, FALSE)
+  select(data = date, casosAcumulados, d1, d2)
+visu(prep_data(
+  data = dd,
+  num_cases = "d1",
+  date_var = "data"
+), FALSE)
 ```
 
 # Predição
@@ -56,12 +61,13 @@ O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul
 chute_campinas = c(1200000 * .1, # 10% da pop
                    40,
                    3)
-optCampinas = opt(dd,
-                  chute = chute_campinas,
-                  pesos = c(.01,1,.01),
-                  lim_inf = c(0,26,0))
+optCampinas = covid19peakfit(data = dd,n_cases = "d1",date_var = "data",init_pars = chute_campinas,lim_inf = c(120000,38,0))
+# optCampinas = opt(dd,
+#                   chute = chute_campinas,
+#                   pesos = c(.01,1,.01),
+#                   lim_inf = c(0,26,0))
 
-futuro(optCampinas, n_fut = 40)           
+future(optCampinas, n_fut = 40)           
 ```
 
 ### Resumo

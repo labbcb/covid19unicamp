@@ -54,19 +54,58 @@ renderValueBox({
 })
 ```
 
+### CFR Campinas
+
+```{r}
+cfrWHO = 3.4
+
+getCFR = function(input){
+  input %>% ungroup() %>% arrange(date) %>% tail(n=1) %>% 
+    mutate(CFR=round(deaths/confirmed * 100, 2)) %>% pull()
+}
+
+my_sectors = gaugeSectors(success=c(0, cfrWHO),
+                        warning = c(cfrWHO+0.01, 2*cfrWHO),
+                        danger = c(2*cfrWHO + 0.01, 100))
+
+gauge(data_city %>% getCFR(), min=0,
+      max=100, symbol="%", my_sectors)
+```
+
+
+### CFR Estado de SP
+
+```{r}
+gauge(data_state %>% getCFR(), min=0, max=100, symbol="%",
+      my_sectors)
+```
+
+### CFR Brasil
+
+```{r}
+brasilCFR = data %>%
+  filter(place_type == "state", is_last) %>%
+  select(confirmed, deaths) %>%
+  summarise(CFR=round(sum(deaths)/sum(confirmed)*100, 2)) %>% 
+  pull()
+gauge(brasilCFR, min=0, max=100, symbol="%",
+      my_sectors)
+```
+
+
 Row
 -------------------------------------
 
-### Números acumulados de casos confirmados e mortes por data
+### Casos e Óbitos até a Presente Data
 
 ```{r}
 plot_cumulative_cases(data_city)
 ```
 
-### Taxa de aumento em relação ao dia anterior
+### Casos Diários
 
 ```{r}
-plot_tax_increase(data_city)
+plot_daily_cases(data_city)
 ```
 
 Estado de Sao Paulo {data-icon="fa-city"}
@@ -98,16 +137,16 @@ renderValueBox({
 Row
 -------------------------------------
 
-### Números acumulados de casos confirmados e mortes por data
+### Casos e Óbitos até a Presente Data
 
 ```{r}
 plot_cumulative_cases(data_state)
 ```
 
-### Taxa de aumento em relação ao dia anterior
+### Casos Diários
 
 ```{r}
-plot_tax_increase(data_state)
+plot_daily_cases(data_state)
 ```
 
 Brasil {data-icon="fa-globe-americas"}
@@ -143,11 +182,8 @@ Mapas (Fase: alpha) {data-icon="fa-map-marked-alt"}
 =====================================
 
 ```{r}
-create_dyn_map(dyn_map_data, "confirmed_per_100k_inhabitants") %>% 
-  addLayersControl(
-    baseGroups = c("Casos confirmados por 100 mil habitantes",
-                   "Casos confirmados",
-                   "Óbitos")
-  )
+renderLeaflet({
+   create_dyn_map(dyn_map_data, "confirmed_per_100k_inhabitants") 
+})
 ```
 

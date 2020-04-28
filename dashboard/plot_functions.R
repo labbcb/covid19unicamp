@@ -9,26 +9,25 @@ library(leaflet)
 ## either data from get_data_state or get_data_city
 plot_cumulative_cases <- function(data) {
   data %>%
+    select(date, confirmed, deaths) %>% 
     gather(type, counts, -date)  %>%
-    mutate(type = ifelse(type == "confirmed", "Casos confirmados", "Mortes")) %>%
+    mutate(type = ifelse(type == "confirmed", "Casos Confirmados", "Óbitos")) %>%
     rename(Contagem = counts, Data = date) %>%
     ggplot(aes(Data, Contagem, colour=type)) +
-      geom_line() + geom_point() +
-      theme_minimal() + theme(legend.position = "bottom")
+    geom_point() +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    scale_color_discrete(name="")
 }
 
 ## either data from get_data_state or get_data_city
-plot_tax_increase <- function(data) {
+plot_daily_cases <- function(data) {
   data %>%
     select(-deaths) %>%
-    mutate(
-      dx = as.integer(date - lag(date, default = date[1])),
-      dconf = confirmed - lag(confirmed, default = confirmed[1]),
-      Taxa = dconf / dx
-    ) %>%
-    rename(Data = date) %>%
+    rename(Data = date, Casos=confirmed_day) %>%
     ggplot(aes(Data)) + 
-    geom_bar(aes(weight=Taxa)) +
+    geom_bar(aes(weight=Casos)) +
+    ylab("Novos Casos por Dia") +
     theme_minimal()
 }
 
@@ -82,11 +81,11 @@ create_dyn_map = function(input, var){
                   style=list("font-weight"="normal", padding="3px 8px"),
                   textsize = "15px", direction = "auto")) %>% 
     addLegend(pal=pal, values=form2, opacity=0.7, title="",
-              labFormat = labelFormat(digits=2),
               position = "bottomright")
 }
 
 create_dyn_map2 = function(input, var){
+  ## a ideia era poder trocar as variaveis que dao os valores das cores
   pal = get_pallete(input[[var]])
   labels = get_labels(input[["name_muni"]],
                       input[[var]])
