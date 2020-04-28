@@ -20,10 +20,14 @@ get_data = function(this_state="SP", RMC, COI, SOI){
   
   dados_cid_RMC %>% bind_rows(dados_cid_COI) %>%
     bind_rows(dados_reg_RMC) %>% bind_rows(dados_est_SP) %>% 
-    select(-confirmed_per_100k_inhabitants, -death_rate) %>% 
-    mutate(CFR=round(deaths/confirmed*100, 2),
-           cases100k = round(confirmed/estimated_population_2019*100000, 2),
-           deaths100k = round(deaths/estimated_population_2019*100000, 2))
+    select(-confirmed_per_100k_inhabitants, -death_rate) %>%
+    group_by(city) %>% 
+    arrange(date) %>% 
+    mutate(CFR         = round(deaths/confirmed*100, 2),
+           cases100k   = round(confirmed/estimated_population_2019*100000, 2),
+           deaths100k  = round(deaths/estimated_population_2019*100000, 2),
+           daily_cases = confirmed - lag(confirmed, n=1, default=0)) %>% 
+    ungroup()
 }
 
 get_cities = function(data){
