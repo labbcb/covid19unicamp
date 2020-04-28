@@ -106,6 +106,7 @@ h3("Escala")
 checkboxInput("log_10", "Logarítmica", FALSE)
 ```
 
+> Neste dashboard, a escolha de RMC incluirá dados de Piracicaba e Limeira àqueles da definição-padrão da RMC.
 
 Row
 -----------------------------------------------------------------------
