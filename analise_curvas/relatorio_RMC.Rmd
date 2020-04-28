@@ -1,0 +1,115 @@
+---
+title: "Estudo pico Campinas e região"
+author: "Gabriel Franco"
+date: "27 abril, 2020"
+output: 
+  html_document:  
+    code_folding: hide
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk[["set"]](echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center")
+options(scipen=999)
+source("src/functions_rmc.R")
+```
+
+# O experimento
+
+Sejam $N_0$ e $N_1$ o número de dias usado para treino e teste, respectivamente. O experimento consiste em tomar os $N_0$ primeiros dias e testar o ajuste nos $N_1$ dias seguintes. Para testar vamos utilizar o erro quadrático médio (EQM) de predição em relação aos dias testados.
+
+Por exemplo, suponha que temos informações de 30 dias na região metropolitana de Campinas. Um dado experimento que chamamos de $(r)$ consiste em:
+
+1. Tome os $N_0=10$ primeiros dias como conjunto de treino.
+2. Tome $N_1=3$ e, consequentemente, tome como conjunto de treino os dias 11,12 e 13.
+2. Realize o ajuste nesse conjunto de treino.
+3. Compare as curvas preditas com as curvas observadas no conjunto de treino, via EQM.
+4. Repita o procedimento para diferentes $N_0$ e $N_1$.
+
+Os parâmetros que obtiverem o melhor EQM serão selecionados como os melhores para predizer o pico de infectados ou óbitos.
+
+# O conjunto de dados
+
+O conjunto de dados é obito a partir dos dados do [Brasil.io](https://brasil.io/dataset/covid19/caso/) e extraídos via [pacote `datacovidbr`](https://github.com/Freguglia/datacovidbr). O número de casos estudado será a soma do número de casos de todas as cidades disponíveis da [região metropolitana de Campinas](https://pt.wikipedia.org/wiki/Lista_de_munic%C3%ADpios_da_Regi%C3%A3o_Metropolitana_de_Campinas).
+
+```{r getdata}
+## Veja a def dessa função em src/functions_rmc.R
+df = get_RMC()
+```
+
+# Chutes iniciais
+
+O modelo é sensível aos chutes iniciais. Portanto, devemos observar o cenário atual para escolher muito bem os chutes
+
+```{r kick}
+ddp = covid19peakfit::prep_data(data = df,
+                                num_cases = "confirmados",
+                                date_var = "date")
+covid19peakfit::visu(ddp,useData = FALSE)
+```
+
+Portanto, vamos definir os chutes iniciais como 10% da população da RMC, aproximadamente 300.000, o pico para o dia 42 (fora do gráfico) e um crescimento de 8. Além disso, definimos o limite inferior dos parâmetros como os o número de casos acumulados observados no momento, número de dias observados e 8, um crescimento considerável.
+
+# Resultados
+
+Tome $N$ como o número de dias observados. Vamos estudar os seguintes parâmetros:
+
+- Chute inicial: $(300.000, 42, 8)$
+- Limite inferior dos parâmetros: $(5000, 38, 0)$
+- $N_2$ varia de 1 a 10
+- $N_1$ varia de 3 até $N-N_2$
+
+
+```{r results, cache=TRUE}
+## Preambulo
+n_preds = 1:10
+tmp = lapply(n_preds, function(n) data.frame(n1=3:(nrow(df)-n),
+                                             n2=n))
+ddn = do.call(rbind,tmp)
+ddn$flag = seq_along(ddn[,1])
+
+## inits
+inits = c(300000, 42, 8)
+pesos = c(1,3,1)
+linf = c(sum(df$confirmados), nrow(df), 0)
+
+# results
+rst = by(
+  data = ddn,
+  INDICES = ddn$flag,
+  FUN = function(y)
+    foo(
+      dd_rmc = df,
+      t_treino = y$n1,
+      t_pred = y$n2,
+      my_init = inits,
+      my_pesos = pesos,
+      my_liminf = linf
+    )
+)
+rst_tab = do.call(rbind,rst)
+
+datatable(rst_tab,
+          filter="top",
+          style = 'bootstrap', 
+          class = 'table-condensed table-hover',
+          extensions = "Buttons",
+          options = list(dom = 'Bfrtip',
+                         buttons = c('copy', 'excel', 'pdf', 'print'))) %>% 
+  formatRound(columns=c('phi_1',"phi_2","phi_3","ssq"), digits=4)
+```
+
+
+
+
+
+
+
+
+
+
+
+
