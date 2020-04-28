@@ -98,6 +98,40 @@ foo <- function(dd_rmc,
 }
 
 
+## Função auxiliar exp2 ===============================
+foo2 <- function(dd_rmc,
+                 t_treino,
+                 t_pred,
+                 phi1,
+                 phi2,
+                 phi3){
+  
+  phi=c(phi1,phi2,phi3)
+  ddp = covid19peakfit::prep_data(data = dd_rmc,
+                                  num_cases = "confirmados",
+                                  date_var = "date")
+  ddp$days= seq_along(ddp$date)
+  if(t_treino+t_pred > nrow(dd_rmc)) stop("Treino e teste ultrapassam o número de dados disponíveis")
+  dd_treino = ddp[1:t_treino,]
+  dd_test = ddp[(t_treino+1):(t_treino+t_pred),]
+  
+  dd_pred = dd_test
+  dd_pred$num_cases = d1f(dd_pred$days, phi)
+  dd_pred$cum_cases = d0f(dd_pred$days, phi)
+  dd_pred$d2 = d2f(dd_pred$days, phi)
+  
+  ssq = mean((dd_pred$d2 - dd_test$d2)^2 + 
+               (dd_pred$num_cases - dd_test$num_cases)^2 + 
+               (dd_pred$cum_cases - dd_test$cum_cases)^2)
+  ssq
+  # 
+  # data.frame(phi_1 = phi[1],
+  #            phi_2 = phi[2],
+  #            phi_3 = phi[3],
+  #            ssq= ssq,
+  #            t_treino, 
+  #            t_pred)
+}
 
 
 

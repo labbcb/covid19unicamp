@@ -1,6 +1,5 @@
 ---
 title: "Estudo pico Campinas e região"
-author: "Gabriel Franco"
 date: "27 abril, 2020"
 output: 
   html_document:  
@@ -53,7 +52,7 @@ covid19peakfit::visu(ddp,useData = FALSE)
 
 Portanto, vamos definir os chutes iniciais como 10% da população da RMC, aproximadamente 300.000, o pico para o dia 42 (fora do gráfico) e um crescimento de 8. Além disso, definimos o limite inferior dos parâmetros como os o número de casos acumulados observados no momento, número de dias observados e 8, um crescimento considerável.
 
-# Resultados
+# Resultados do experimento
 
 Tome $N$ como o número de dias observados. Vamos estudar os seguintes parâmetros:
 
@@ -91,6 +90,7 @@ rst = by(
     )
 )
 rst_tab = do.call(rbind,rst)
+rm(rst)
 
 datatable(rst_tab,
           filter="top",
@@ -103,13 +103,118 @@ datatable(rst_tab,
 ```
 
 
+## Conclusões
+
+Como temos pouca variabilidade no começo, é natural que os melhores ajustes em termos de EQM sejam com os primeiros dias. Com isso, conforme o modelo ganha informação, melhor temos uma posição sobre os parâmetros, como o dia esperado para o pico de casos confirmados $\phi_2$.
+
+A figura a seguir mostra o log(EQM) em função do número de dias disponíveis para treino no eixo $x$ e cada ponto colorido conforme o número de dias que teve para avaliar a performance do modelo. Como esperado, os dados tem menor variabildade no início e por isso os erros menores, mas temos uma estabilização a partir do dia 20. Portanto, as estimativas obtidas a partir do vigésimo dia podem ser uma escolha mais adequada.
+
+```{r}
+rst_tab %>% 
+  ggplot(aes(t_treino,log(ssq),col=t_pred)) +
+  geom_point(alpha=.5)
+
+```
 
 
 
+No gráfico a seguir temos a estimativa de $\phi_2$ conforme o número de dias para treino e o número de dias para teste do modelo. Como esperado, no início o modelo tem-se pouca informação e podemos descartar suas estimativas. Por outro lado, as estimativas em função no número de dias de treino mostram que estamos longe de ter uma estabilidade para estimar o pico de casos. 
+
+```{r}
+rst_tab %>% 
+  mutate(pico = df$date[1]+phi_2) %>% 
+  ggplot(aes(t_treino,pico,col=t_pred)) +
+  geom_point(alpha=.5) +
+  geom_hline(yintercept = 47)
+```
+
+Enquanto não tivermos uma estabilidade no gráfico acima ou ao menos uma indicação de que a estimativa do parâmetro $\phi_2$ para de crescer, não é possível estimar com precisão o pico de casos na RMC. A única informação certa é que enquanto não há queda no crescimento de novos casos, o pico é provavelmente muito além do maior valor estimado: `r format(df$date[1] + max(rst_tab$phi_2), "%d/%B/%Y")`.
+
+## Gráficos
+
+Lembrando que são estimativas e, portanto, sujeitas a erro.
+
+### Predição de casos confirmados
+
+```{r}
+fit_casos = covid19peakfit(
+  data = df,
+  n_cases = "confirmados",
+  date_var = "date",
+  init_pars = c(300000, 42, 8),
+  weights = c(1, 5, 1),
+  lim_inf = c(150000, 35, 0)
+)
+covid19peakfit::future(fit_casos, n_fut = 40)
+```
+
+- Data estimada de pico de casos: `r format(df$date[1] + fit_casos$pars[2], "%d/%B/%Y")`
+
+### Predição de pico de óbitos
+
+Para o pico de óbitos ficar condizente com o pico de casos estimados, ou seja, após o pico de casos, o chute inicial do número máximo de óbitos tem que ser acima de 30000 óbitos na RMC.
 
 
+```{r}
+fit_obitos = covid19peakfit(
+  data = df,
+  n_cases = "obitos",
+  date_var = "date",
+  init_pars = c(30000, 42, 8),
+  weights = c(1, 5, 1),
+  lim_inf = c(2000, 35, 0)
+)
+covid19peakfit::future(fit_obitos, n_fut = 40)
+```
+
+- Data estimada de pico de óbitos: `r format(df$date[1] + fit_obitos$pars[2], "%d/%B/%Y")`
+<!-- # Experimento 2 -->
+
+<!-- ## Resultados -->
+
+```{r exp2, cache=FALSE, eval=FALSE}
+## Preambulo
+n_preds = 1:10
+tmp = lapply(n_preds, function(n) data.frame(n1=20:(nrow(df)-n),
+                                             n2=n))
+ddn = do.call(rbind,tmp)
+phi1 = seq(200000, 600000, by=20000)
+phi2 = 34:80
+phi3 = seq(2.5,15, by=.3)
+
+N = length(phi1)*length(phi2)*length(phi3)*nrow(ddn)
+dd2 = expand_grid(ddn, phi1, phi2, phi3)
+
+library(parallel)
+cl <- makeCluster(detectCores()-1)
+clusterExport(cl, varlist=c("df","foo2"))
+ssq2 = parApply(cl,dd2, 1, function(y)
+  foo2(
+    dd_rmc = df,
+    t_treino = y[1],
+    t_pred = y[2],
+    phi1 = y[3],
+    phi2 = y[4],
+    phi3 = y[5]
+  ))
+stopCluster(cl)
 
 
+# rst2 = matrix(nrow=N, ncol=6)
+# for(k in 1:N){
+#   rst2[k,1] = dd2$phi1[k]
+#   rst2[k,2] = dd2$phi2[k]
+#   rst2[k,3] = dd2$phi3[k]
+#   rst2[k,4] =   foo2(
+#     dd_rmc = df,
+#     t_treino = dd2$n1[k],
+#     t_pred = dd2$n2[k],
+#     phi = c(dd2$phi1[k], dd2$phi2[k], dd2$phi3[k])
+#   )
+#   rst2[k,5] = dd2$n1[k]
+#   rst2[k,6] = dd2$n2[k]
+# }
 
+```
 
 
