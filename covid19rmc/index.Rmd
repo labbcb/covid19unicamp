@@ -70,7 +70,7 @@ checkboxInput("log_10", "Logarítmica", FALSE)
 Row
 -----------------------------------------------------------------------
 
-### Casos por 100mil Habitantes
+### Casos por 100 mil Habitantes
 
 ```{r}
 renderLeaflet({
@@ -98,25 +98,25 @@ gsec = gaugeSectors(success = c(0.00, 3.40),
 gauge(getField(rmc_last, "Campinas"), min=0, max=100, symbol="%", sectors = gsec)
 ```
 
-### Casos Confirmados
+### Casos Confirmados por 100mil Habitantes
 
 ```{r}
 renderPlot({
-  plot_counts(spdata, "confirmed", input$choice_city, input$log_10)
+  plot_counts(spdata, "cases100k", input$choice_city, input$log_10)
 })
 ```
 
-> O número de casos de COVID-19 confirmados até a presente data.
+> O número de casos, por 100 mil habitantes, de COVID-19 confirmados até a presente data.
 
-### Óbitos
+### Óbitos por 100 mil Habitantes
 
 ```{r}
 renderPlot({
-  plot_counts(spdata, "deaths", input$choice_city, input$log_10)
+  plot_counts(spdata, "deaths100k", input$choice_city, input$log_10)
 })
 ```
 
-> O número de óbitos até a presente data.
+> O número de óbitos padronizado por 100 mil habitantes até a presente data.
 
 ### Letalidade
 
@@ -126,17 +126,7 @@ renderPlot({
 })
 ```
 
-> A razão entre óbitos e casos confirmados até a presente data.
-
-### Casos por 100 mil habitantes
-
-```{r}
-renderPlot({
-  plot_counts(spdata, "cases100k", input$choice_city, input$log_10)
-})
-```
-
-> Casos de COVID-19 por 100 mil habitantes até a presente data.
+> A razão entre óbitos e casos confirmados até a presente data. A OMS, em março, indicou que, em média, 3,4% dos casos evoluem para óbito.
 
 Contato
 ==============================================

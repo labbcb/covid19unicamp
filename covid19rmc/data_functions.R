@@ -22,7 +22,8 @@ get_data = function(this_state="SP", RMC, COI, SOI){
     bind_rows(dados_reg_RMC) %>% bind_rows(dados_est_SP) %>% 
     select(-confirmed_per_100k_inhabitants, -death_rate) %>% 
     mutate(CFR=round(deaths/confirmed*100, 2),
-           cases100k = round(confirmed/estimated_population_2019*100000, 2))
+           cases100k = round(confirmed/estimated_population_2019*100000, 2),
+           deaths100k = round(deaths/estimated_population_2019*100000, 2))
 }
 
 get_cities = function(data){
