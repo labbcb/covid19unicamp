@@ -3,6 +3,8 @@ title: "Estudo pico Campinas e região"
 date: "27 abril, 2020"
 output: 
   html_document:  
+    toc: true
+    toc_float: true
     code_folding: hide
     theme: paper
 ---
@@ -62,7 +64,7 @@ Tome $N$ como o número de dias observados. Vamos estudar os seguintes parâmetr
 - $N_1$ varia de 3 até $N-N_2$
 
 
-```{r results, cache=TRUE}
+```{r results, cache=FALSE}
 ## Preambulo
 n_preds = 1:10
 tmp = lapply(n_preds, function(n) data.frame(n1=3:(nrow(df)-n),
@@ -168,11 +170,22 @@ covid19peakfit::future(fit_obitos, n_fut = 40)
 ```
 
 - Data estimada de pico de óbitos: `r format(df$date[1] + fit_obitos$pars[2], "%d/%B/%Y")`
-<!-- # Experimento 2 -->
 
-<!-- ## Resultados -->
+****
 
-```{r exp2, cache=FALSE, eval=FALSE}
+# Experimento 2
+
+O segundo experimento estuda o potencial preditivo das curvas de forma manual. Ao invés de ajustar o modelo proposto, este experimento define uma série de valores para os três parâmetros e os testa para uma série de conjuntos de treinamento e teste, como no primeiro experimento.
+
+A amplitude dos parâmetros testados foi de:
+
+- $\phi_1 \in [200.000, 600.000]$
+- $\phi_2 \in [34,80]$
+- $\phi_3 \in [2.5, 15]$
+
+## Resultados
+
+```{r exp2, cache=TRUE, eval=TRUE}
 ## Preambulo
 n_preds = 1:10
 tmp = lapply(n_preds, function(n) data.frame(n1=20:(nrow(df)-n),
@@ -184,7 +197,10 @@ phi3 = seq(2.5,15, by=.3)
 
 N = length(phi1)*length(phi2)*length(phi3)*nrow(ddn)
 dd2 = expand_grid(ddn, phi1, phi2, phi3)
+dd2$ssq = readRDS("src/ssq.rda")
+```
 
+```{r parallel, eval=FALSE}
 library(parallel)
 cl <- makeCluster(detectCores()-1)
 clusterExport(cl, varlist=c("df","foo2"))
@@ -217,4 +233,35 @@ stopCluster(cl)
 
 ```
 
+Os erros quadrátivos médios de predição para cada $\phi_2$ estão no gráfico a seguir:
 
+
+```{r plot-rmc, cache=TRUE}
+dd2 %>% 
+  ggplot(aes(phi2,log(ssq),col=n1))+
+  geom_point(alpha=.4)
+```
+
+Maiores valores de $\phi2$ tendem a ter uma melhor predição, estabilizando seu mínimo em torno de $\phi_2=63$, indicando que talvez o melhor valor para este parâmetro esteja entre 63 e 80. Ou seja, **um pico estimado entre `r format(df$date[1]+63, "%m/%B/%y")` e `r format(df$date[1]+80, "%m/%B/%y")`.**
+
+Em seguida, temos uma tabela interativa que mostra os resultados do experimento. Nela é possível verificar, por exemplo, a melhor configuração de parâmetros para 27 dias de treino (`n1`) e predição para 6 dias adiante (`n2`). Ao fim da tabela temos o pico estimado e seu número esperado de casos para a configuração em questão.
+
+```{r}
+dds = subset(dd2,n2>6 & ssq < 19666)
+dds$pico = format(df$date[1]+dds$phi2, "%m/%B/%y")
+dds$max_casos = apply(dds, 1, function(y) d1f(x = as.numeric(y[4]),
+                                              pars = as.numeric(c(y[3],y[4],y[5]) )))
+dds =  dds %>% 
+  arrange(ssq) %>% 
+  slice(1:100) 
+
+datatable(data = dds,
+          filter="top",
+          style = 'bootstrap',
+          class = 'table-condensed table-hover') %>%
+  formatRound(columns=c('phi1',"phi2","phi3","ssq","max_casos"), digits=2)
+```
+
+## Conclusões
+
+O modelo estima um provável pico de casos  entre  `r format(df$date[1]+63, "%m/%B/%y")` e `r format(df$date[1]+80, "%m/%B/%y")`, como mencionado anteriormente. No entanto, o modelo depende do cenário atual e dos dados em questão. Mudanças de políticas de isolamento social podem fazer com que o número de casos aumente drasticamente e consequentemente  um pico muito mais agudo.
