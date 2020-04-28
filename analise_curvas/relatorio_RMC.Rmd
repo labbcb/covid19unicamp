@@ -242,13 +242,14 @@ dd2 %>%
   geom_point(alpha=.4)
 ```
 
-Maiores valores de $\phi2$ tendem a ter uma melhor predição, estabilizando seu mínimo em torno de $\phi_2=63$, indicando que talvez o melhor valor para este parâmetro esteja entre 63 e 80. Ou seja, **um pico estimado entre `r format(df$date[1]+63, "%m/%B/%y")` e `r format(df$date[1]+80, "%m/%B/%y")`.**
+Maiores valores de $\phi2$ tendem a ter uma melhor predição, estabilizando seu mínimo em torno de $\phi_2=63$, indicando que talvez o melhor valor para este parâmetro esteja entre 63 e 80. Ou seja, **um pico estimado entre `r format(df$date[1]+63, "%d/%B/%y")` e `r format(df$date[1]+80, "%d/%B/%y")`.**
 
 Em seguida, temos uma tabela interativa que mostra os resultados do experimento. Nela é possível verificar, por exemplo, a melhor configuração de parâmetros para 27 dias de treino (`n1`) e predição para 6 dias adiante (`n2`). Ao fim da tabela temos o pico estimado e seu número esperado de casos para a configuração em questão.
 
 ```{r}
 dds = subset(dd2,n2>6 & ssq < 19666)
-dds$pico = format(df$date[1]+dds$phi2, "%m/%B/%y")
+dds$pico = df$date[1] + dds$phi2
+dds$pico = format(dds$pico, "%d/%B/%Y")
 dds$max_casos = apply(dds, 1, function(y) d1f(x = as.numeric(y[4]),
                                               pars = as.numeric(c(y[3],y[4],y[5]) )))
 dds =  dds %>% 
