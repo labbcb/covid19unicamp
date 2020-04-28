@@ -12,79 +12,42 @@ library(flexdashboard)
 ```
 
 ```{r get_data, include=FALSE}
+library(leaflet)
 library(tidyverse)
 library(datacovidbr)
 library(geobr)
 library(plotly)
+source("data_functions.R")
+source("plot_functions.R")
 
-RMC = tibble(city = c("Americana", "Artur Nogueira", "Campinas",
-                      "Cosmópolis", "Engenheiro Coelho",
-                      "Holambra", "Hortolândia", "Indaiatuba",
-                      "Itatiba", "Jaguariúna", "Monte Mor",
-                      "Morungaba", "Nova Odessa", "Paulínia",
-                      "Pedreira", "Santa Bárbara D'oeste",
-                      "Santo Antônio De Posse", "Sumaré",
-                      "Valinhos", "Vinhedo", "Piracicaba", "Limeira","RMC"),
-             city_ibge_code= c(3501608, 3503802, 3509502,
-                               3512803, 3515152,
-                               3519055, 3519071, 3520509,
-                               3523404, 3524709, 3531803,
-                               3532009, 3533403, 3536505,
-                               3537107, 3545803,
-                               3548005, 3552403,
-                               3556206, 3556701,
-                               3538709, 3526902, NA))
-spdata = brasilio() %>%
-  filter(state == "SP") %>% 
-  select(-state, -confirmed_per_100k_inhabitants, -death_rate) %>% 
-  semi_join(RMC %>% drop_na(), by='city_ibge_code') %>% 
-  mutate(CFR=round(deaths/confirmed*100, 2),
-         cases100k = round(confirmed/estimated_population_2019*100000, 2))
+RMC = tibble(city = c("Americana", "Artur Nogueira", "Campinas", "Cosmópolis", "Engenheiro Coelho",
+                      "Holambra", "Hortolândia", "Indaiatuba", "Itatiba", "Jaguariúna",
+                      "Monte Mor", "Morungaba", "Nova Odessa", "Paulínia", "Pedreira",
+                      "Santa Bárbara D'oeste", "Santo Antônio De Posse", "Sumaré",
+                      "Valinhos", "Vinhedo"),
+             city_ibge_code= c(3501608, 3503802, 3509502, 3512803, 3515152,
+                               3519055, 3519071, 3520509, 3523404, 3524709,
+                               3531803, 3532009, 3533403, 3536505, 3537107,
+                               3545803, 3548005, 3552403,
+                               3556206, 3556701))
 
-  rmc = spdata %>% group_by(date) %>% 
-    summarise(city='RMC', confirmed=sum(confirmed, na.rm=TRUE),
-              deaths=sum(deaths, na.rm=TRUE), is_last=FALSE,
-              estimated_population_2019=3224443+397322+300911,
-              city_ibge_code=NA, CFR=round(deaths/confirmed*100, 2),
-              cases100k = round(confirmed/estimated_population_2019*100000, 2)) %>% 
-    ungroup() %>% arrange(date)
-  rmc$is_last[nrow(rmc)] = TRUE
-  
-  spdata = spdata %>% bind_rows(rmc)
-  rm(rmc)
+COI = tibble(city = c("Piracicaba", "Limeira"), city_ibge_code = c(3538709, 3526902))
 
-casos0 = (RMC %>% drop_na()) %>% anti_join(spdata, by='city_ibge_code')
+SOI = tibble(city = "São Paulo", city_ibge_code=NA)
 
-dados_municipios = read_municipality(code_muni="SP", year=2018, showProgress = FALSE) %>% 
-  semi_join(RMC %>% drop_na(), by=c("code_muni"="city_ibge_code"))
+spdata = get_data("SP", RMC, COI, SOI)
 
-rmc_last = dados_municipios %>%
-  left_join(spdata %>%
-              filter(is_last) %>% 
-              select(-city, -place_type, -is_last), by=c("code_muni"="city_ibge_code"))
+## casos0 = (RMC %>% drop_na()) %>% anti_join(spdata, by='city_ibge_code')
+
+dados_municipios = get_base_municipios("SP", 2018) %>% 
+  semi_join(RMC %>% bind_rows(COI), by=c("code_muni"="city_ibge_code"))
+
+# rmc_last = dados_municipios %>%
+#   left_join(spdata %>%
+#               filter(is_last) %>% 
+#              select(-city, -place_type, -is_last), by=c("code_muni"="city_ibge_code"))
 ```
 
-
-```{r setup_plots, include=FALSE}
-plot_counts = function(input, the_y, choice_city, log_10){
-  my_plot = input %>% filter(city %in% choice_city) %>% 
-    ggplot(aes_string("date", the_y)) +
-    geom_line(aes(colour=city)) +
-    geom_point(aes(colour=city)) + theme_bw() +
-    xlab("Data") +
-    theme(legend.position="bottom", legend.title = element_blank())
-  if (the_y == "confirmed"){
-    my_plot = my_plot + ylab("Casos Confirmados")
-  }else if (the_y == "deaths"){
-    my_plot = my_plot + ylab("Óbitos")
-  }
-  
-  if (log_10)
-    my_plot = my_plot + scale_y_log10()
-  my_plot
-}
-
-```
 
 Panorama
 ==============================================
@@ -96,83 +59,25 @@ Painel de Controle {.sidebar}
 ```{r}
 ## vec eh essencial para que os graficos dinamicos funcionem
 ##     para um callback que identifique o nome da cidade
-vec = RMC$city
-names(vec) = RMC$city
 checkboxGroupInput("choice_city",
                    h3("Cidades"),
-                   choices = as.list(vec),
+                   choices = spdata %>% get_cities(),
                    selected = "RMC")
 h3("Escala")
 checkboxInput("log_10", "Logarítmica", FALSE)
 ```
-
-> Neste dashboard, a escolha de RMC incluirá dados de Piracicaba e Limeira àqueles da definição-padrão da RMC.
 
 Row
 -----------------------------------------------------------------------
 
 ### Casos por 100mil Habitantes
 
-```{r func_mapa, include=FALSE}
-library(leaflet)
-get_pallete = function(this_var, scheme="RdYlGn", nbins=5, this_rev=TRUE){
-  bins = quantile(na.omit(this_var),
-                  seq(0, 1, length.out = nbins + 1))
-  bins[1] = floor(bins[1])
-  bins[nbins+1] = ceiling(bins[nbins+1])
-  bins = unique(round(bins, 0))
-  colorBin(scheme, domain=this_var, bins=bins,
-           reverse=this_rev, right=TRUE)  
-}
-
-get_labels2 = function(cities, values){
-  values = round(values, 2)
-  values = sprintf("%0.2f", values)
-  values[values == "NA"] = "N/A"
-  values = str_replace(values, "\\.", ",")
-  sprintf("<strong>%s</strong><br/>%s casos / 100.000 habitantes", cities, values ) %>%
-    lapply(htmltools::HTML)
-}
-
-get_labels = function(input){
-  pmap_chr(input %>%
-             as.data.frame() %>%
-             select(name_muni, confirmed, deaths,estimated_population_2019, CFR, cases100k),
-           function(name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k){
-             estimated_population_2019 = prettyNum(estimated_population_2019, big.mark=".", decimal.mark=",")
-             CFR = prettyNum(round(CFR, 2), big.mark=".", decimal.mark=",")
-             cases100k = prettyNum(round(cases100k, 2), big.mark=".", decimal.mark=",")
-             sprintf("<strong>%s</strong><br/>Casos Confirmados: %s<br/>Óbitos: %s<br/>Habitantes: %s <br/>Fatalidade: %s&percnt;<br/>Casos por 100mil habitantes: %s",
-                     name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k)
-             }) %>% as.list() %>% lapply(htmltools::HTML)
-}
-
-create_dyn_map = function(input, var){
-  pal = get_pallete(input[[var]])
-#  labels = get_labels(input[["name_muni"]],
-#                      input[[var]])
-  labels = get_labels(input)
-  form1 = as.formula(paste0("~pal(", var, ")"))
-  form2 = as.formula(paste0("~", var))
-  input %>% leaflet() %>% addTiles() %>% 
-    addPolygons(fillColor=form1, weight=2, opacity=1, color="white",
-                dashArray="3", fillOpacity=0.7,
-                highlight=highlightOptions(
-                  weight=5, color="#666", dashArray="",
-                  fillOpacity=0.7, bringToFront=TRUE),
-                label = labels,
-                labelOptions = labelOptions(
-                  style=list("font-weight"="normal", padding="3px 8px"),
-                  textsize = "15px", direction = "auto")) %>% 
-    addLegend(pal=pal, values=form2, opacity=0.7, title="",
-              position = "bottomright")
-}
-```
-
-
 ```{r}
 renderLeaflet({
-  create_dyn_map(rmc_last, 'cases100k')
+  dados_municipios %>%
+    left_join(spdata %>% filter(place_type %in% c('city_coi', 'city_rmc'), is_last),
+              by=c("code_muni"="city_ibge_code")) %>%
+    create_dyn_map('cases100k')
 })
 ```
 
