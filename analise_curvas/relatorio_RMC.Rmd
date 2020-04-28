@@ -1,0 +1,268 @@
+---
+title: "Estudo pico Campinas e região"
+date: "27 abril, 2020"
+output: 
+  html_document:  
+    toc: true
+    toc_float: true
+    code_folding: hide
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk[["set"]](echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE,
+                      fig.align = "center")
+options(scipen=999)
+source("src/functions_rmc.R")
+```
+
+# O experimento
+
+Sejam $N_0$ e $N_1$ o número de dias usado para treino e teste, respectivamente. O experimento consiste em tomar os $N_0$ primeiros dias e testar o ajuste nos $N_1$ dias seguintes. Para testar vamos utilizar o erro quadrático médio (EQM) de predição em relação aos dias testados.
+
+Por exemplo, suponha que temos informações de 30 dias na região metropolitana de Campinas. Um dado experimento que chamamos de $(r)$ consiste em:
+
+1. Tome os $N_0=10$ primeiros dias como conjunto de treino.
+2. Tome $N_1=3$ e, consequentemente, tome como conjunto de treino os dias 11,12 e 13.
+2. Realize o ajuste nesse conjunto de treino.
+3. Compare as curvas preditas com as curvas observadas no conjunto de treino, via EQM.
+4. Repita o procedimento para diferentes $N_0$ e $N_1$.
+
+Os parâmetros que obtiverem o melhor EQM serão selecionados como os melhores para predizer o pico de infectados ou óbitos.
+
+# O conjunto de dados
+
+O conjunto de dados é obito a partir dos dados do [Brasil.io](https://brasil.io/dataset/covid19/caso/) e extraídos via [pacote `datacovidbr`](https://github.com/Freguglia/datacovidbr). O número de casos estudado será a soma do número de casos de todas as cidades disponíveis da [região metropolitana de Campinas](https://pt.wikipedia.org/wiki/Lista_de_munic%C3%ADpios_da_Regi%C3%A3o_Metropolitana_de_Campinas).
+
+```{r getdata}
+## Veja a def dessa função em src/functions_rmc.R
+df = get_RMC()
+```
+
+# Chutes iniciais
+
+O modelo é sensível aos chutes iniciais. Portanto, devemos observar o cenário atual para escolher muito bem os chutes
+
+```{r kick}
+ddp = covid19peakfit::prep_data(data = df,
+                                num_cases = "confirmados",
+                                date_var = "date")
+covid19peakfit::visu(ddp,useData = FALSE)
+```
+
+Portanto, vamos definir os chutes iniciais como 10% da população da RMC, aproximadamente 300.000, o pico para o dia 42 (fora do gráfico) e um crescimento de 8. Além disso, definimos o limite inferior dos parâmetros como os o número de casos acumulados observados no momento, número de dias observados e 8, um crescimento considerável.
+
+# Resultados do experimento
+
+Tome $N$ como o número de dias observados. Vamos estudar os seguintes parâmetros:
+
+- Chute inicial: $(300.000, 42, 8)$
+- Limite inferior dos parâmetros: $(5000, 38, 0)$
+- $N_2$ varia de 1 a 10
+- $N_1$ varia de 3 até $N-N_2$
+
+
+```{r results, cache=FALSE}
+## Preambulo
+n_preds = 1:10
+tmp = lapply(n_preds, function(n) data.frame(n1=3:(nrow(df)-n),
+                                             n2=n))
+ddn = do.call(rbind,tmp)
+ddn$flag = seq_along(ddn[,1])
+
+## inits
+inits = c(300000, 42, 8)
+pesos = c(1,3,1)
+linf = c(sum(df$confirmados), nrow(df), 0)
+
+# results
+rst = by(
+  data = ddn,
+  INDICES = ddn$flag,
+  FUN = function(y)
+    foo(
+      dd_rmc = df,
+      t_treino = y$n1,
+      t_pred = y$n2,
+      my_init = inits,
+      my_pesos = pesos,
+      my_liminf = linf
+    )
+)
+rst_tab = do.call(rbind,rst)
+rm(rst)
+
+datatable(rst_tab,
+          filter="top",
+          style = 'bootstrap', 
+          class = 'table-condensed table-hover',
+          extensions = "Buttons",
+          options = list(dom = 'Bfrtip',
+                         buttons = c('copy', 'excel', 'pdf', 'print'))) %>% 
+  formatRound(columns=c('phi_1',"phi_2","phi_3","ssq"), digits=4)
+```
+
+
+## Conclusões
+
+Como temos pouca variabilidade no começo, é natural que os melhores ajustes em termos de EQM sejam com os primeiros dias. Com isso, conforme o modelo ganha informação, melhor temos uma posição sobre os parâmetros, como o dia esperado para o pico de casos confirmados $\phi_2$.
+
+A figura a seguir mostra o log(EQM) em função do número de dias disponíveis para treino no eixo $x$ e cada ponto colorido conforme o número de dias que teve para avaliar a performance do modelo. Como esperado, os dados tem menor variabildade no início e por isso os erros menores, mas temos uma estabilização a partir do dia 20. Portanto, as estimativas obtidas a partir do vigésimo dia podem ser uma escolha mais adequada.
+
+```{r}
+rst_tab %>% 
+  ggplot(aes(t_treino,log(ssq),col=t_pred)) +
+  geom_point(alpha=.5)
+
+```
+
+
+
+No gráfico a seguir temos a estimativa de $\phi_2$ conforme o número de dias para treino e o número de dias para teste do modelo. Como esperado, no início o modelo tem-se pouca informação e podemos descartar suas estimativas. Por outro lado, as estimativas em função no número de dias de treino mostram que estamos longe de ter uma estabilidade para estimar o pico de casos. 
+
+```{r}
+rst_tab %>% 
+  mutate(pico = df$date[1]+phi_2) %>% 
+  ggplot(aes(t_treino,pico,col=t_pred)) +
+  geom_point(alpha=.5) +
+  geom_hline(yintercept = 47)
+```
+
+Enquanto não tivermos uma estabilidade no gráfico acima ou ao menos uma indicação de que a estimativa do parâmetro $\phi_2$ para de crescer, não é possível estimar com precisão o pico de casos na RMC. A única informação certa é que enquanto não há queda no crescimento de novos casos, o pico é provavelmente muito além do maior valor estimado: `r format(df$date[1] + max(rst_tab$phi_2), "%d/%B/%Y")`.
+
+## Gráficos
+
+Lembrando que são estimativas e, portanto, sujeitas a erro.
+
+### Predição de casos confirmados
+
+```{r}
+fit_casos = covid19peakfit(
+  data = df,
+  n_cases = "confirmados",
+  date_var = "date",
+  init_pars = c(300000, 42, 8),
+  weights = c(1, 5, 1),
+  lim_inf = c(150000, 35, 0)
+)
+covid19peakfit::future(fit_casos, n_fut = 40)
+```
+
+- Data estimada de pico de casos: `r format(df$date[1] + fit_casos$pars[2], "%d/%B/%Y")`
+
+### Predição de pico de óbitos
+
+Para o pico de óbitos ficar condizente com o pico de casos estimados, ou seja, após o pico de casos, o chute inicial do número máximo de óbitos tem que ser acima de 30000 óbitos na RMC.
+
+
+```{r}
+fit_obitos = covid19peakfit(
+  data = df,
+  n_cases = "obitos",
+  date_var = "date",
+  init_pars = c(30000, 42, 8),
+  weights = c(1, 5, 1),
+  lim_inf = c(2000, 35, 0)
+)
+covid19peakfit::future(fit_obitos, n_fut = 40)
+```
+
+- Data estimada de pico de óbitos: `r format(df$date[1] + fit_obitos$pars[2], "%d/%B/%Y")`
+
+****
+
+# Experimento 2
+
+O segundo experimento estuda o potencial preditivo das curvas de forma manual. Ao invés de ajustar o modelo proposto, este experimento define uma série de valores para os três parâmetros e os testa para uma série de conjuntos de treinamento e teste, como no primeiro experimento.
+
+A amplitude dos parâmetros testados foi de:
+
+- $\phi_1 \in [200.000, 600.000]$
+- $\phi_2 \in [34,80]$
+- $\phi_3 \in [2.5, 15]$
+
+## Resultados
+
+```{r exp2, cache=TRUE, eval=TRUE}
+## Preambulo
+n_preds = 1:10
+tmp = lapply(n_preds, function(n) data.frame(n1=20:(nrow(df)-n),
+                                             n2=n))
+ddn = do.call(rbind,tmp)
+phi1 = seq(200000, 600000, by=20000)
+phi2 = 34:80
+phi3 = seq(2.5,15, by=.3)
+
+N = length(phi1)*length(phi2)*length(phi3)*nrow(ddn)
+dd2 = expand_grid(ddn, phi1, phi2, phi3)
+dd2$ssq = readRDS("src/ssq.rda")
+```
+
+```{r parallel, eval=FALSE}
+library(parallel)
+cl <- makeCluster(detectCores()-1)
+clusterExport(cl, varlist=c("df","foo2"))
+ssq2 = parApply(cl,dd2, 1, function(y)
+  foo2(
+    dd_rmc = df,
+    t_treino = y[1],
+    t_pred = y[2],
+    phi1 = y[3],
+    phi2 = y[4],
+    phi3 = y[5]
+  ))
+stopCluster(cl)
+
+
+# rst2 = matrix(nrow=N, ncol=6)
+# for(k in 1:N){
+#   rst2[k,1] = dd2$phi1[k]
+#   rst2[k,2] = dd2$phi2[k]
+#   rst2[k,3] = dd2$phi3[k]
+#   rst2[k,4] =   foo2(
+#     dd_rmc = df,
+#     t_treino = dd2$n1[k],
+#     t_pred = dd2$n2[k],
+#     phi = c(dd2$phi1[k], dd2$phi2[k], dd2$phi3[k])
+#   )
+#   rst2[k,5] = dd2$n1[k]
+#   rst2[k,6] = dd2$n2[k]
+# }
+
+```
+
+Os erros quadrátivos médios de predição para cada $\phi_2$ estão no gráfico a seguir:
+
+
+```{r plot-rmc, cache=TRUE}
+dd2 %>% 
+  ggplot(aes(phi2,log(ssq),col=n1))+
+  geom_point(alpha=.4)
+```
+
+Maiores valores de $\phi2$ tendem a ter uma melhor predição, estabilizando seu mínimo em torno de $\phi_2=63$, indicando que talvez o melhor valor para este parâmetro esteja entre 63 e 80. Ou seja, **um pico estimado entre `r format(df$date[1]+63, "%d/%B/%y")` e `r format(df$date[1]+80, "%d/%B/%y")`.**
+
+Em seguida, temos uma tabela interativa que mostra os resultados do experimento. Nela é possível verificar, por exemplo, a melhor configuração de parâmetros para 27 dias de treino (`n1`) e predição para 6 dias adiante (`n2`). Ao fim da tabela temos o pico estimado e seu número esperado de casos para a configuração em questão.
+
+```{r}
+dds = subset(dd2,n2>6 & ssq < 19666)
+dds$pico = df$date[1] + dds$phi2
+dds$pico = format(dds$pico, "%d/%B/%Y")
+dds$max_casos = apply(dds, 1, function(y) d1f(x = as.numeric(y[4]),
+                                              pars = as.numeric(c(y[3],y[4],y[5]) )))
+dds =  dds %>% 
+  arrange(ssq) %>% 
+  slice(1:100) 
+
+datatable(data = dds,
+          filter="top",
+          style = 'bootstrap',
+          class = 'table-condensed table-hover') %>%
+  formatRound(columns=c('phi1',"phi2","phi3","ssq","max_casos"), digits=2)
+```
+
+## Conclusões
+
+O modelo estima um provável pico de casos  entre  `r format(df$date[1]+63, "%m/%B/%y")` e `r format(df$date[1]+80, "%m/%B/%y")`, como mencionado anteriormente. No entanto, o modelo depende do cenário atual e dos dados em questão. Mudanças de políticas de isolamento social podem fazer com que o número de casos aumente drasticamente e consequentemente  um pico muito mais agudo.
