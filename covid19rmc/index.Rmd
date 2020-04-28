@@ -24,7 +24,7 @@ RMC = tibble(city = c("Americana", "Artur Nogueira", "Campinas",
                       "Morungaba", "Nova Odessa", "Paulínia",
                       "Pedreira", "Santa Bárbara D'oeste",
                       "Santo Antônio De Posse", "Sumaré",
-                      "Valinhos", "Vinhedo", "RMC"),
+                      "Valinhos", "Vinhedo", "Piracicaba", "Limeira","RMC"),
              city_ibge_code= c(3501608, 3503802, 3509502,
                                3512803, 3515152,
                                3519055, 3519071, 3520509,
@@ -32,7 +32,8 @@ RMC = tibble(city = c("Americana", "Artur Nogueira", "Campinas",
                                3532009, 3533403, 3536505,
                                3537107, 3545803,
                                3548005, 3552403,
-                               3556206, 3556701, NA))
+                               3556206, 3556701,
+                               3538709, 3526902, NA))
 spdata = brasilio() %>%
   filter(state == "SP") %>% 
   select(-state, -confirmed_per_100k_inhabitants, -death_rate) %>% 
@@ -43,7 +44,7 @@ spdata = brasilio() %>%
   rmc = spdata %>% group_by(date) %>% 
     summarise(city='RMC', confirmed=sum(confirmed, na.rm=TRUE),
               deaths=sum(deaths, na.rm=TRUE), is_last=FALSE,
-              estimated_population_2019=3224443,
+              estimated_population_2019=3224443+397322+300911,
               city_ibge_code=NA, CFR=round(deaths/confirmed*100, 2),
               cases100k = round(confirmed/estimated_population_2019*100000, 2)) %>% 
     ungroup() %>% arrange(date)
