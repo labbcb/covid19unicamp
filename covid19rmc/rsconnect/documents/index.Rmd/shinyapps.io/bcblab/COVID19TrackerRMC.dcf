@@ -1,0 +1,12 @@
+name: COVID19TrackerRMC
+title: COVID19TrackerRMC
+username:
+account: bcblab
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2200241
+bundleId: 3075899
+url: https://bcblab.shinyapps.io/COVID19TrackerRMC/
+when: 1588062144.76051
+asMultiple: FALSE
+asStatic: FALSE
