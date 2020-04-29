@@ -10,7 +10,9 @@ pkgs <- c(
   "sf",
   "leaflet",
   "geobr",
-  "stringr"
+  "stringr",
+  "xts",
+  "dygraphs"
 )
 
 install.packages(pkgs, repos = "https://cran.rstudio.com")
