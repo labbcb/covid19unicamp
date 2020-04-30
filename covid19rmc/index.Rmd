@@ -137,7 +137,7 @@ renderDygraph({
 
 > O número de óbitos padronizado por 100 mil habitantes até a presente data.
 
-### Letalidade (%)
+### Letalidade (%) - Referência OMS: 3,4%
 
 ```{r}
 renderDygraph({
@@ -145,7 +145,7 @@ renderDygraph({
 })
 ```
 
-> A razão entre óbitos e casos confirmados até a presente data. A OMS, em março, indicou que, em média, 3,4% dos casos evoluem para óbito.
+> A razão entre óbitos e casos confirmados até a presente data.
 
 Contato
 ==============================================
