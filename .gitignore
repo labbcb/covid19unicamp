@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 .DS_Store
+covid19rmc/rsconnect
+dashboard/rsconnect

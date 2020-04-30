@@ -15,11 +15,19 @@ get_data = function(this_state="SP", RMC, COI, SOI){
   dados_cid_COI = dados_sp %>% semi_join(COI, by='city_ibge_code') %>% 
     mutate(place_type = "city_coi")
   
+  dados_reg_RMCCOI = dados_reg_RMC %>% bind_rows(dados_cid_COI) %>% group_by(date) %>%
+    summarise(state="SP", city="RMC + Limeira + Piracicaba",
+              place_type="region_rmccoi", confirmed=sum(confirmed),
+              deaths=sum(deaths), is_last=FALSE, estimated_population_2019=3224443+306114+404142,
+              city_ibge_code=NA, confirmed_per_100k_inhabitants=NA, death_rate=NA) %>% 
+    ungroup() %>% arrange(date)
+  dados_reg_RMCCOI$is_last[nrow(dados_reg_RMCCOI)] = TRUE
+  
   dados_est_SP  = dados_sp %>% filter(place_type == "state") %>% 
     mutate(city="SP (Estado)")
   
-  dados_cid_RMC %>% bind_rows(dados_cid_COI) %>%
-    bind_rows(dados_reg_RMC) %>% bind_rows(dados_est_SP) %>% 
+  dados_cid_RMC %>% bind_rows(dados_cid_COI) %>% bind_rows(dados_reg_RMC) %>%
+    bind_rows(dados_reg_RMCCOI) %>% bind_rows(dados_est_SP) %>% 
     select(-confirmed_per_100k_inhabitants, -death_rate) %>%
     group_by(city) %>% 
     arrange(date) %>% 

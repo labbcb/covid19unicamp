@@ -1,7 +1,8 @@
 ---
-title: "COVID-19 Tracker: Região Metropolitana de Campinas"
+title: "COVID-19 Tracker: Região Metropolitana de Campinas + Limeira + Piracicaba"
 output: 
   flexdashboard::flex_dashboard:
+    logo: logo_transparent_background.png
     orientation: rows
     horizontal_layout: fill
 runtime: shiny
@@ -37,6 +38,9 @@ SOI = tibble(city = "São Paulo", city_ibge_code=NA)
 
 spdata = get_data("SP", RMC, COI, SOI)
 
+# readxl::read_excel("~/Downloads/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
+#   filter(ANO == 2010, UF == 35) %>% 
+#   select(ANO:Município, IDHM)
 ## casos0 = (RMC %>% drop_na()) %>% anti_join(spdata, by='city_ibge_code')
 
 dados_municipios = get_base_municipios("SP", 2018) %>% 
@@ -59,10 +63,20 @@ Painel de Controle {.sidebar}
 ```{r}
 ## vec eh essencial para que os graficos dinamicos funcionem
 ##     para um callback que identifique o nome da cidade
-checkboxGroupInput("choice_city",
-                   h3("Cidades"),
-                   choices = spdata %>% get_cities(),
-                   selected = "RMC")
+h3("Cidades / Regiões")
+selectizeInput(
+  'choice_city', label = "Escolha até 4 opções",
+  choices = spdata %>% get_cities() %>% unlist(),
+  selected = c("Campinas", "RMC"),
+  multiple = TRUE,
+  options = list(create=TRUE, maxItems=4,
+                 placeholder='Selecione uma cidade/região')
+)
+
+# checkboxGroupInput("choice_city",
+#                    h3("Cidades"),
+#                    choices = spdata %>% get_cities(),
+#                    selected = "RMC")
 h3("Escala")
 checkboxInput("log_10", "Logarítmica", FALSE)
 ```
@@ -77,6 +91,7 @@ renderLeaflet({
   dados_municipios %>%
     left_join(spdata %>% filter(place_type %in% c('city_coi', 'city_rmc'), is_last),
               by=c("code_muni"="city_ibge_code")) %>%
+    mutate(cases100k = ifelse(is.na(cases100k), 0, cases100k)) %>% 
     create_dyn_map('cases100k')
 })
 ```
@@ -118,7 +133,7 @@ renderPlot({
 
 > O número de óbitos padronizado por 100 mil habitantes até a presente data.
 
-### Letalidade
+### Letalidade (%)
 
 ```{r}
 renderPlot({
@@ -134,7 +149,7 @@ Contato
 ### Implementação
 
 >Força Tarefa UNICAMP Contra a COVID-19 (Frente de Modelagem e Epidemiologia)<br/><br/>
->Biostatistics and Computational Biology Laboratory (BCBLab)<br/>
+>[Biostatistics and Computational Biology Laboratory (BCBLab)](https://www.bcblab.org)<br/>
 >Instituto de Matemática, Estatística e Computação Científica<br/>
 >Universidade de Campinas / UNICAMP<br/>
 
