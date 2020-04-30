@@ -22,22 +22,29 @@ library(covid19peakfit)
 source("src/functions.R")
 ```
 
+# Última atualização
+
+- `r format(Sys.Date(), "%d de %B, %Y")`
+
 # Objetivo e introdução
 
 O objetivo é estimar quando teremos o pico de infectados em um mesmo dia na cidade de Campinas, usando os dados por cidades da [iniciativa Brasil.io](https://brasil.io/dataset/covid19/caso), via [pacote no R `datacovidbr` de Victor Freguglia](https://github.com/Freguglia/datacovidbr).
 
 A predição é realizada ajustando um modelo simultâneo para os casos acumulados, confirmados e a diferença de casos confirmados. Matematicamente, se considerarmos os casos acumulados como nossa função principal, os casos confirmados e a diferença de casos são sua primeira e segunda derivadas, respectivamente. [Para mais detalhes, veja aqui](http://bcblab.org/covid19unicamp/analise_curvas/modelo_derivadas.html).
 
-# Situação atual
+# Casos confirmados
+
+## Situação atualizada
 
 A situação atual da cidade de Campinas é a seguinte:
 
 ```{r atual}
-dd = brasilio(silent=TRUE) %>% 
+dd_ori = brasilio(silent=TRUE) 
+dd = dd_ori %>% 
   arrange(date) %>% 
   filter(city=="Campinas") %>% 
-  mutate(casosAcumulados = cumsum(confirmed),
-         d1 = confirmed,
+  mutate(casosAcumulados = confirmed,
+         d1 = c(0, diff(confirmed)),
          d2 = c(0, diff(d1))
   ) %>% 
   select(data = date, casosAcumulados, d1, d2)
@@ -48,20 +55,87 @@ visu(prep_data(
 ), FALSE)
 ```
 
-# Predição
+## Predição
 
 Usando o modelo de predição mencionado vamos estimar o dia e o número de máximo infectados em Campinas.
 
 
-## Futuro previsto
+### Número de casos previsto
 
 O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul. Em seguida, uma tabela indicando a data prevista de pico e o número estimado.
 
 ```{r futuro}
-chute_campinas = c(1200000 * .1, # 10% da pop
+chute_campinas = c(3000, # 10% da pop
                    40,
                    3)
-optCampinas = covid19peakfit(data = dd,n_cases = "d1",date_var = "data",init_pars = chute_campinas,lim_inf = c(120000,38,0))
+optCampinas = covid19peakfit(
+  data = dd,
+  n_cases = "d1",
+  date_var = "data",
+  init_pars = chute_campinas,
+  lim_inf = c(dd$casosAcumulados[nrow(dd)], 38, 0),
+  weights = c(.5, 2, 5)
+)
+# optCampinas = opt(dd,
+#                   chute = chute_campinas,
+#                   pesos = c(.01,1,.01),
+#                   lim_inf = c(0,26,0))
+
+future(optCampinas, n_fut = 40)           
+```
+
+## Resumo
+
+- Número de casos totais esperado: `r optCampinas$pars[1]`
+- Pico esperado: `r format(dd$data[1] + optCampinas$pars[2], "%d/%B, %Y")`
+- Número estimado de máximo de casos em um dia: `r round(max(d1f(1:100, optCampinas[["pars"]])))`
+
+## Ajuste nos dados
+
+Este gráfico mostra o ajuste do modelo nos dados atuais. É importante que todas as curvas estejam bem ajustadas em cada painel.
+
+```{r pred}
+optCampinas$plot
+```
+
+# Óbitos 
+
+## Situação atualizada
+
+O número de óbitos é estudado da mesma maneira que o número de casos e temos o cenário atual a seguir:
+
+```{r}
+dd = dd_ori %>% 
+  arrange(date) %>% 
+  filter(city=="Campinas") %>% 
+  mutate(casosAcumulados = deaths,
+         d1 = c(0,diff(deaths)),
+         d2 = c(0, diff(d1))
+  ) %>% 
+  select(data = date, casosAcumulados, d1, d2)
+visu(prep_data(
+  data = dd,
+  num_cases = "d1",
+  date_var = "data"
+), FALSE)
+```
+
+
+## Número de óbitos previsto
+
+O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul. Em seguida, uma tabela indicando a data prevista de pico e o número estimado.
+
+```{r futuro-obt}
+chute_campinas = c(40,
+                   40,
+                   3)
+optCampinas = covid19peakfit(
+  data = dd,
+  n_cases = "d1",
+  date_var = "data",
+  init_pars = chute_campinas,
+  lim_inf = c(20, 38, 0)
+)
 # optCampinas = opt(dd,
 #                   chute = chute_campinas,
 #                   pesos = c(.01,1,.01),
@@ -72,13 +146,14 @@ future(optCampinas, n_fut = 40)
 
 ### Resumo
 
+- Número de óbitos esperado: `r optCampinas$pars[1]`
 - Pico esperado: `r format(dd$data[1] + optCampinas$pars[2], "%d/%B, %Y")`
-- Número estimado de máximo de casos em um dia: `r round(max(d1f(1:100, optCampinas[["pars"]])))`
+- Número estimado de máximo de óbitos em um dia: `r round(max(d1f(1:100, optCampinas[["pars"]])))`
 
-## Ajuste nos dados
+### Ajuste nos dados
 
 Este gráfico mostra o ajuste do modelo nos dados atuais. É importante que todas as curvas estejam bem ajustadas em cada painel.
 
-```{r pred}
+```{r pred-obt}
 optCampinas$plot
 ```
