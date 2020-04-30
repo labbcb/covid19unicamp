@@ -23,6 +23,21 @@ plot_counts = function(input, the_y, choice_city, log_10){
   my_plot
 }
 
+# plot using dygraphs
+plot_counts_time <- function(input, the_y, choice_city, log_10) {
+  if (is.null(choice_city))
+    return(NULL)
+  
+  input %>% 
+    filter(city %in% choice_city) %>%
+    select(date, city, value=all_of(the_y)) %>%
+    mutate(value = if (log_10) log10(value) else value) %>%
+    pivot_wider(names_from = "city", values_from = value) %>%
+    column_to_rownames("date") %>%
+    as.xts() %>%
+    dygraph()
+}
+
 get_pallete = function(this_var, scheme="RdYlGn", nbins=5, this_rev=TRUE){
   bins = quantile(na.omit(this_var),
                   seq(0, 1, length.out = nbins + 1))

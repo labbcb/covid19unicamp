@@ -18,6 +18,8 @@ library(tidyverse)
 library(datacovidbr)
 library(geobr)
 library(plotly)
+library(xts)
+library(dygraphs)
 source("data_functions.R")
 source("plot_functions.R")
 
@@ -116,18 +118,19 @@ gauge(getField(rmc_last, "Campinas"), min=0, max=100, symbol="%", sectors = gsec
 ### Casos Confirmados por 100mil Habitantes
 
 ```{r}
-renderPlot({
-  plot_counts(spdata, "cases100k", input$choice_city, input$log_10)
+renderDygraph({
+  plot_counts_time(spdata, "cases100k", input$choice_city, input$log_10)
 })
 ```
+
 
 > O número de casos, por 100 mil habitantes, de COVID-19 confirmados até a presente data.
 
 ### Óbitos por 100 mil Habitantes
 
 ```{r}
-renderPlot({
-  plot_counts(spdata, "deaths100k", input$choice_city, input$log_10)
+renderDygraph({
+  plot_counts_time(spdata, "deaths100k", input$choice_city, input$log_10)
 })
 ```
 
@@ -136,8 +139,8 @@ renderPlot({
 ### Letalidade (%)
 
 ```{r}
-renderPlot({
-  plot_counts(spdata, "CFR", input$choice_city, input$log_10)
+renderDygraph({
+  plot_counts_time(spdata, "CFR", input$choice_city, input$log_10)
 })
 ```
 
