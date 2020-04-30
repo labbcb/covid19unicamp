@@ -87,7 +87,7 @@ create_dyn_map = function(input, var){
                 labelOptions = labelOptions(
                   style=list("font-weight"="normal", padding="3px 8px"),
                   textsize = "15px", direction = "auto")) %>% 
-    addLegend(pal=pal, values=form2, opacity=0.7, title="",
+    leaflet::addLegend(pal=pal, values=form2, opacity=0.7, title="",
               position = "bottomright")
 }
 
