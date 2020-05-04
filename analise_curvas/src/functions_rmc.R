@@ -63,7 +63,7 @@ foo <- function(dd_rmc,
                 my_pesos = c(.1,3,.3),
                 my_liminf = c(5000, 40, 0)){
   ddp = covid19peakfit::prep_data(data = dd_rmc,
-                                  num_cases = "confirmados",
+                                  cum_cases = "confirmados",
                                   date_var = "date")
   ddp$days= seq_along(ddp$date)
   if(t_treino+t_pred > nrow(dd_rmc)) stop("Treino e teste ultrapassam o número de dados disponíveis")
@@ -108,7 +108,7 @@ foo2 <- function(dd_rmc,
   
   phi=c(phi1,phi2,phi3)
   ddp = covid19peakfit::prep_data(data = dd_rmc,
-                                  num_cases = "confirmados",
+                                  cum_cases = "confirmados",
                                   date_var = "date")
   ddp$days= seq_along(ddp$date)
   if(t_treino+t_pred > nrow(dd_rmc)) stop("Treino e teste ultrapassam o número de dados disponíveis")
