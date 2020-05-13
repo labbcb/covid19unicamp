@@ -1,6 +1,18 @@
 ###
-get_data = function(this_state="SP", RMC, COI, SOI){
-  dados_sp = brasilio() %>% filter(state == this_state)
+get_data_brasil = function(input){
+  input %>% filter(place_type == "state") %>% 
+    select(-confirmed_per_100k_inhabitants, -death_rate) %>%
+    group_by(state) %>% 
+    arrange(date) %>% 
+    mutate(CFR         = round(deaths/confirmed*100, 2),
+           cases100k   = round(confirmed/estimated_population_2019*100000, 2),
+           deaths100k  = round(deaths/estimated_population_2019*100000, 2),
+           daily_cases = confirmed - lag(confirmed, n=1, default=0)) %>% 
+    ungroup()
+}
+
+get_data = function(input, this_state="SP", RMC, COI, SOI){
+  dados_sp = input %>% filter(state == this_state)
   
   dados_cid_RMC = dados_sp %>% semi_join(RMC, by='city_ibge_code') %>% 
     mutate(place_type = "city_rmc")
@@ -53,3 +65,33 @@ get_base_municipios = function(this_muni="SP", this_year=2018){
   }
   readRDS(fname)
 }
+
+get_base_estados = function(this_state="all", this_year=2018){
+  fname = "base_estado.rds"
+  if (!file.exists(fname)){
+    base_state = read_state(code_state=this_state, year=this_year, showProgress = FALSE)
+    saveRDS(base_state, file=fname)
+    return(base_state)
+  }
+  readRDS(fname)
+}
+
+
+## R0
+get_R = function(input){
+  ref = tibble(date = seq(min(input$date),
+                          max(input$date), by=1))
+  
+  input = ref %>% left_join(sp_data, by='date') %>%
+    mutate(cases = ifelse(is.na(cases), 0L, as.integer(cases))) %>% 
+    rename(dates=date, I=cases)
+  
+  library(EpiEstim)
+  
+  myconfig = make_config(min_mean_si=3.7, mean_si=4.7,
+                         max_mean_si=6, min_std_si=1.9, std_si=2.9,
+                         std_mean_si=2.9, max_std_si=4.9, mean_prior=2.6,
+                         std_prior=2, si_parametric_distr='lognormal')
+  estimate_R(input, method="parametric_si", config = myconfig)
+}
+

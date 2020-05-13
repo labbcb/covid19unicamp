@@ -57,24 +57,41 @@ get_labels2 = function(cities, values){
     lapply(htmltools::HTML)
 }
 
-get_labels = function(input){
-  pmap_chr(input %>%
-             as.data.frame() %>%
-             select(name_muni, confirmed, deaths,estimated_population_2019, CFR, cases100k),
-           function(name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k){
-             estimated_population_2019 = prettyNum(estimated_population_2019, big.mark=".", decimal.mark=",")
-             CFR = prettyNum(round(CFR, 2), big.mark=".", decimal.mark=",")
-             cases100k = prettyNum(round(cases100k, 2), big.mark=".", decimal.mark=",")
-             sprintf("<strong>%s</strong><br/>Casos Confirmados: %s<br/>Óbitos: %s<br/>Habitantes: %s <br/>Fatalidade: %s&percnt;<br/>Casos por 100mil habitantes: %s",
-                     name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k)
-           }) %>% as.list() %>% lapply(htmltools::HTML)
+get_labels = function(input, country=FALSE){
+  if (country){
+    ## a diferenca entre os dois eh que aqui eh name_state vs. name_muni
+    ## como unificar com pmap_chr?
+    pmap_chr(input %>%
+               as.data.frame() %>%
+               select(name_state, confirmed, deaths,estimated_population_2019, CFR, cases100k, deaths100k),
+             function(name_state, confirmed, deaths, estimated_population_2019, CFR, cases100k, deaths100k){
+               estimated_population_2019 = prettyNum(estimated_population_2019, big.mark=".", decimal.mark=",")
+               CFR = prettyNum(round(CFR, 2), big.mark=".", decimal.mark=",")
+               cases100k = prettyNum(round(cases100k, 2), big.mark=".", decimal.mark=",")
+               deaths100k = prettyNum(round(deaths100k, 2), big.mark=".", decimal.mark=",")
+               sprintf("<strong>%s</strong><br/>Casos Confirmados: %s<br/>Óbitos: %s<br/>Habitantes: %s <br/>Fatalidade: %s&percnt;<br/>Casos por 100mil habitantes: %s<br/>Óbitos por 100 mil habitantes: %s",
+                       name_state, confirmed, deaths, estimated_population_2019, CFR, cases100k, deaths100k)
+             }) %>% as.list() %>% lapply(htmltools::HTML)
+  }else{
+    pmap_chr(input %>%
+               as.data.frame() %>%
+               select(name_muni, confirmed, deaths,estimated_population_2019, CFR, cases100k, deaths100k),
+             function(name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k, deaths100k){
+               estimated_population_2019 = prettyNum(estimated_population_2019, big.mark=".", decimal.mark=",")
+               CFR = prettyNum(round(CFR, 2), big.mark=".", decimal.mark=",")
+               cases100k = prettyNum(round(cases100k, 2), big.mark=".", decimal.mark=",")
+               deaths100k = prettyNum(round(deaths100k, 2), big.mark=".", decimal.mark=",")
+               sprintf("<strong>%s</strong><br/>Casos Confirmados: %s<br/>Óbitos: %s<br/>Habitantes: %s <br/>Fatalidade: %s&percnt;<br/>Casos por 100 mil habitantes: %s<br/>Óbitos por 100 mil habitantes: %s",
+                       name_muni, confirmed, deaths, estimated_population_2019, CFR, cases100k, deaths100k)
+             }) %>% as.list() %>% lapply(htmltools::HTML)
+  }
 }
 
-create_dyn_map = function(input, var){
+create_dyn_map = function(input, var, country=FALSE){
   pal = get_pallete(input[[var]])
   #  labels = get_labels(input[["name_muni"]],
   #                      input[[var]])
-  labels = get_labels(input)
+  labels = get_labels(input, country=country)
   form1 = as.formula(paste0("~pal(", var, ")"))
   form2 = as.formula(paste0("~", var))
   input %>% leaflet() %>% addTiles() %>% 

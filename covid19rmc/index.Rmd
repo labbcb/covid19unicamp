@@ -17,7 +17,6 @@ library(leaflet)
 library(tidyverse)
 library(datacovidbr)
 library(geobr)
-library(plotly)
 library(xts)
 library(dygraphs)
 source("data_functions.R")
@@ -38,7 +37,9 @@ COI = tibble(city = c("Piracicaba", "Limeira"), city_ibge_code = c(3538709, 3526
 
 SOI = tibble(city = "São Paulo", city_ibge_code=NA)
 
-spdata = get_data("SP", RMC, COI, SOI)
+brasilio_data = brasilio(cache=TRUE)
+
+spdata = brasilio_data %>% get_data("SP", RMC, COI, SOI)
 
 # readxl::read_excel("~/Downloads/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
 #   filter(ANO == 2010, UF == 35) %>% 
@@ -48,14 +49,13 @@ spdata = get_data("SP", RMC, COI, SOI)
 dados_municipios = get_base_municipios("SP", 2018) %>% 
   semi_join(RMC %>% bind_rows(COI), by=c("code_muni"="city_ibge_code"))
 
-# rmc_last = dados_municipios %>%
-#   left_join(spdata %>%
-#               filter(is_last) %>% 
-#              select(-city, -place_type, -is_last), by=c("code_muni"="city_ibge_code"))
+brdata = brasilio_data %>% get_data_brasil()
+dados_mapa_brasil = get_base_estados() %>% 
+    left_join(brdata, by=c("code_state"="city_ibge_code"))
 ```
 
 
-Panorama
+RMC
 ==============================================
 
 
@@ -65,6 +65,19 @@ Painel de Controle {.sidebar}
 ```{r}
 ## vec eh essencial para que os graficos dinamicos funcionem
 ##     para um callback que identifique o nome da cidade
+h3("Métrica para Mapa")
+vars_rmc = c("confirmed", "deaths", "cases100k", "deaths100k", "CFR")
+names(vars_rmc) = c("Casos confirmados", "Óbitos", "Casos por 100 mil habitantes",
+                    "Óbitos por 100 mil habitantes", "Fatalidade")
+selectizeInput(
+  'choice_var_rmc', label = "Escolha variável de interesse",
+  choices = vars_rmc,
+  selected = "deaths100k",
+  multiple = FALSE,
+  options = list(create=TRUE,
+                 placeholder='Selecione variável')
+)
+
 h3("Cidades / Regiões")
 selectizeInput(
   'choice_city', label = "Escolha até 4 opções",
@@ -86,19 +99,23 @@ checkboxInput("log_10", "Logarítmica", FALSE)
 Row
 -----------------------------------------------------------------------
 
-### Casos por 100 mil Habitantes
+### Panorama RMC
 
 ```{r}
 renderLeaflet({
   dados_municipios %>%
     left_join(spdata %>% filter(place_type %in% c('city_coi', 'city_rmc'), is_last),
               by=c("code_muni"="city_ibge_code")) %>%
-    mutate(cases100k = ifelse(is.na(cases100k), 0, cases100k)) %>% 
-    create_dyn_map('cases100k')
+    mutate(cases100k = ifelse(is.na(cases100k), 0, cases100k),
+           deaths100k = ifelse(is.na(deaths100k), 0, deaths100k),
+           confirmed = ifelse(is.na(confirmed), 0, confirmed),
+           deaths = ifelse(is.na(deaths), 0, deaths),
+           CFR = ifelse(is.na(CFR), 0, CFR)) %>% 
+    create_dyn_map(input$choice_var_rmc)
 })
 ```
 
-### Casos Confirmados por 100mil Habitantes
+### Casos Confirmados por 100 mil Habitantes
 
 ```{r}
 renderDygraph({
@@ -142,6 +159,98 @@ renderDygraph({
 ```{r}
 renderDygraph({
   plot_counts_time(spdata, "CFR", input$choice_city, input$log_10)
+})
+```
+
+> A razão entre óbitos e casos confirmados até a presente data.
+
+Brasil
+==============================================
+
+Painel de Controle {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+h3("Métrica para Mapa")
+vars = c("confirmed", "deaths", "cases100k", "deaths100k", "CFR")
+names(vars) = c("Casos confirmados", "Óbitos", "Casos por 100 mil habitantes",
+                "Óbitos por 100 mil habitantes", "Fatalidade")
+selectizeInput(
+  'choice_var', label = "Escolha variável de interesse",
+  choices = vars,
+  selected = "deaths100k",
+  multiple = FALSE,
+  options = list(create=TRUE,
+                 placeholder='Selecione variável')
+)
+
+h3("Estados")
+selectizeInput(
+  'choice_state', label = "Escolha até 4 opções",
+  choices = sort(unique(dados_mapa_brasil$state)),
+  selected = "SP",
+  multiple = TRUE,
+  options = list(create=TRUE, maxItems=4,
+                 placeholder='Selecione um Estado')
+)
+
+
+h3("Escala")
+checkboxInput("log_10_state", "Logarítmica", FALSE)
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Panorama Nacional
+
+```{r}
+renderLeaflet({
+   dados_mapa_brasil %>% filter(is_last) %>% 
+    create_dyn_map(input$choice_var, country=TRUE)
+})
+```
+
+### Casos Confirmados por 100 mil Habitantes
+
+```{r}
+renderDygraph({
+  brdata %>%
+    rename(this_city=city, city=state) %>%
+    plot_counts_time("cases100k",
+                     input$choice_state,
+                     input$log_10_state)
+})
+```
+
+> O número de casos, por 100 mil habitantes, de COVID-19 confirmados até a presente data.
+
+Row
+-----------------------------------------------------------------------
+
+### Óbitos por 100 mil Habitantes
+
+```{r}
+renderDygraph({
+  brdata %>%
+    rename(this_city=city, city=state) %>%
+    plot_counts_time("deaths100k",
+                     input$choice_state,
+                     input$log_10_state)
+})
+```
+
+> O número de óbitos padronizado por 100 mil habitantes até a presente data.
+
+### Fatalidade (%) - Referência OMS: 3,4%
+
+```{r}
+renderDygraph({
+  brdata %>%
+    rename(this_city=city, city=state) %>%
+    plot_counts_time("CFR",
+                     input$choice_state,
+                     input$log_10_state)
 })
 ```
 
