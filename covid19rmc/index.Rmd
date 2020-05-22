@@ -1,12 +1,20 @@
 ---
-title: "COVID-19 Tracker: Região Metropolitana de Campinas + Limeira + Piracicaba"
-output: 
+title: 'COVID-19 Tracker: Região Metropolitana de Campinas + Limeira + Piracicaba'
+resource_files:
+- gen_data/base_estado_all_2018.rds
+- gen_data/base_muni_SP_2018.rds
+- gen_data/drs_sp.rds
+- gen_data/mapa_drs_sp.rds
+- data/drs_sp.xlsx
+- data/estimativa_TCU_2019_20200427.xls
+- data/RELATORIO_DTB_BRASIL_MUNICIPIO.xls
+runtime: shiny
+output:
   flexdashboard::flex_dashboard:
+    css: myformat.css
+    horizontal_layout: fill
     logo: logo_transparent_background.png
     orientation: rows
-    horizontal_layout: fill
-    css: myformat.css
-runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
