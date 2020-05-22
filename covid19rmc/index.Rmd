@@ -5,6 +5,7 @@ output:
     logo: logo_transparent_background.png
     orientation: rows
     horizontal_layout: fill
+    css: myformat.css
 runtime: shiny
 ---
 
@@ -37,7 +38,7 @@ COI = tibble(city = c("Piracicaba", "Limeira"), city_ibge_code = c(3538709, 3526
 
 SOI = tibble(city = "São Paulo", city_ibge_code=NA)
 
-brasilio_data = brasilio(cache=TRUE)
+brasilio_data = brasilio()
 
 spdata = brasilio_data %>% get_data("SP", RMC, COI, SOI)
 

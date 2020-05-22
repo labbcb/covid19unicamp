@@ -61,6 +61,7 @@ get_cities = function(data){
  
 get_base_municipios = function(this_muni="SP", this_year=2018){
   fname = paste0("base_muni_", this_muni, "_", this_year, ".rds")
+  fname = file.path("gen_data", fname)
   if (!file.exists(fname)){
     base_muni = read_municipality(code_muni=this_muni, year=this_year, showProgress = FALSE)
     saveRDS(base_muni, file=fname)
@@ -71,6 +72,7 @@ get_base_municipios = function(this_muni="SP", this_year=2018){
 
 get_base_estados = function(this_state="all", this_year=2018){
   fname = paste0("base_estado_", this_state, "_", this_year, ".rds")
+  fname = file.path("gen_data", fname)
   if (!file.exists(fname)){
     base_state = read_state(code_state=this_state, year=this_year, showProgress = FALSE)
     saveRDS(base_state, file=fname)
@@ -104,16 +106,17 @@ get_R = function(input){
 get_drs_sp_data = function(){
   library(readxl)
   fname = "drs_sp.rds"
+  fname = file.path("gen_data", fname)
   if (!file.exists(fname)){
-    municipios_sp_ibge = read_excel("RELATORIO_DTB_BRASIL_MUNICIPIO.xls") %>% 
+    municipios_sp_ibge = read_excel("data/RELATORIO_DTB_BRASIL_MUNICIPIO.xls") %>% 
       select(Nome_UF, Nome_Município, `Código Município Completo`) %>% 
       rename(municipio=Nome_Município, cod_mun = `Código Município Completo`) %>% 
       filter(Nome_UF == "São Paulo") %>% 
       mutate(municipio=toupper(municipio))
-    drs_sp = read_excel("drs_sp.xlsx") %>%
+    drs_sp = read_excel("data/drs_sp.xlsx") %>%
       left_join(municipios_sp_ibge, by=c("city"="municipio")) %>% 
       select(-Nome_UF)
-    pop_data = read_excel("estimativa_TCU_2019_20200427.xls",
+    pop_data = read_excel("data/estimativa_TCU_2019_20200427.xls",
                           sheet = "Municípios", range = "A2:E5572") %>% 
       rename(uf = UF, cod_uf = `COD. UF`, cod_mun = `COD. MUNIC`,
              muni = `NOME DO MUNICÍPIO`, pop = `POPULAÇÃO ESTIMADA`) %>% 
@@ -167,6 +170,7 @@ get_drs_covid_data = function(input){
 
 get_drs_shp = function(){
   fname = "mapa_drs_sp.rds"
+  fname = file.path("gen_data", fname)
   if (!file.exists(fname)){
     library(sf)
     mapas_sp = get_base_municipios("SP", 2018) %>%
