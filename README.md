@@ -10,7 +10,7 @@ output:
 
 ## Obtenção de Dados
 
-Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Tue May 19 01:52:07 2020).
+Afim de simplificar o acesso aos dados, utilizou-se o pacote [`datacovidbr`](https://github.com/Freguglia/datacovidbr), que importa diariamente os dados compilados pela iniciativa [Brasil IO](http://www.brasil.io), sem maiores dependências. Para que colaboradores que não utilizam o R como plataforma analítica, o arquivo `dados/covid19_cidades.csv` possui os dados (por cidade) disponíveis hoje (Mon May 25 17:17:00 2020).
 
 
 ```r
@@ -43,12 +43,12 @@ casos_sp %>% head() %>% knitr::kable("markdown")
 
 |date       |city      | confirmed| deaths| estimated_population_2019| confirmed_per_100k_inhabitants| death_rate|
 |:----------|:---------|---------:|------:|-------------------------:|------------------------------:|----------:|
-|2020-05-18 |São Paulo |     36188|   2856|                  12252023|                       295.3635|     0.0789|
-|2020-05-17 |São Paulo |     35931|   2835|                  12252023|                       293.2659|     0.0789|
-|2020-05-16 |São Paulo |     35429|   2792|                  12252023|                       289.1686|     0.0788|
-|2020-05-15 |São Paulo |     33992|   2674|                  12252023|                       277.4399|     0.0787|
-|2020-05-14 |São Paulo |     31873|   2596|                  12252023|                       260.1448|     0.0814|
-|2020-05-13 |São Paulo |     30402|   2494|                  12252023|                       248.1386|     0.0820|
+|2020-05-24 |São Paulo |     45527|   3534|                  12252023|                       371.5876|     0.0776|
+|2020-05-23 |São Paulo |     44887|   3491|                  12252023|                       366.3640|     0.0778|
+|2020-05-22 |São Paulo |     42973|   3352|                  12252023|                       350.7421|     0.0780|
+|2020-05-21 |São Paulo |     41451|   3238|                  12252023|                       338.3196|     0.0781|
+|2020-05-20 |São Paulo |     39466|   3135|                  12252023|                       322.1182|     0.0794|
+|2020-05-19 |São Paulo |     37640|   3029|                  12252023|                       307.2146|     0.0805|
 
 ```r
 casos_sp %>% select(date, confirmed, deaths) %>% gather(type, counts, -date) %>% 
