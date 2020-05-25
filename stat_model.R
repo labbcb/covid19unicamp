@@ -66,7 +66,7 @@ add_ci(newdata, fit)
 
 ### se for adicionar IDH
 library(readxl)
-IDH = read_excel("~/Downloads/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
+IDH = read_excel("dados_fixos/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
   filter(ANO == 2010) %>% 
   select(ANO:Município, IDHM) %>% 
   mutate(QIDHM = case_when(
