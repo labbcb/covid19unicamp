@@ -1,0 +1,79 @@
+---
+title: "Regressão de Poisson: Casos de Covid19 nas cidades do Brasil"
+date: "Ultima atualização: `r format(Sys.time(), '%d de %B de %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  cache = FALSE,
+  tidy = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.width = 9, 
+  fig.height = 6
+)
+
+source("../stats_models/src_cases_poisson.R", encoding = "UTF-8")
+
+e <- max(eweekdata$eweek)
+n_cit <- length(unique(eweekdata$cidade))
+```
+
+## Modelo
+
+Seja $Y_{it}$ número de casos na cidade $i$ na semana $t$.
+Assumimos que $Y_{it} \mid \mu_{it} \sim \mathrm{Poisson}(\mu_{it})$, em que 
+
+$$
+\log \mu_{it} = \alpha + \log(\mathrm{pop}_i) + g(\mathrm{myweek}_t) + \mathrm{cidade}_i + \mathrm{QIDHM}_i
+$$
+com $i = 1, \ldots, `r n_cit`$ e $t = 1, \ldots, n_{it}$, sendo 
+que $g(\cdot)$ é uma base de splines cúbica.
+
+## Performance
+
+Modelo foi ajustado utilizando as informações até a semana epidemiológica $`r e` - 2 = `r e - 2`$
+e a performance foi avaliada com base na previsão das $2$ próximas semanas.
+
+```{r perf}
+tb <- fit_model(eweekdata, ahead = 2, cv = TRUE)
+out <- summary_model(tb, cities = c("São Paulo-SP", "Campinas-SP"))
+
+knitr::kable(
+  out$met, 
+  row.names = FALSE, 
+  digits = 4
+)
+
+out$plots
+```
+
+
+## Predição próximas 2 semanas
+
+```{r pred}
+tb <- fit_model(eweekdata, ahead = 2, cv = FALSE)
+out <- summary_model(tb, cities = c("São Paulo-SP", "Campinas-SP"))
+
+knitr::kable(
+  out$met %>% 
+    filter(base == "train") %>% 
+    select(-base), 
+  row.names = FALSE, 
+  caption = "Performance na base treino",
+  digits = 4
+)
+
+
+out$plots
+
+out$tab
+```
+
+
