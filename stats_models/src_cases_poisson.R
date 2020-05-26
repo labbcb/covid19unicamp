@@ -24,6 +24,8 @@ mis <- function(y, lt, ut, alpha = 0.05) {
 # Model fit and predictions -------------------------------------------------
 fit_model <- function(train, ahead=2, cv=FALSE) {
 
+  train <- eweekdata
+
   test <- train %>%
     filter(eweek > max(eweek) - ahead) 
        
@@ -44,10 +46,10 @@ fit_model <- function(train, ahead=2, cv=FALSE) {
   ## Fit the model
   fit <- glm(
     formula = wcases ~ ns(myweek, 3) + QIDHM + cidade + offset(log(estimated_population_2019)),
-    family = poisson(link="log"),
+    family = quasipoisson(link = "log"),
     data = train
   )
-  
+
   test <- test %>% 
     add_ci(fit, alpha = 0.05, yhatName = "pred", names = c("lw_ci", "up_ci")) %>% 
     mutate(
