@@ -5,6 +5,8 @@ library(datacovidbr)
 library(tidyverse)
 library(broom)
 library(stringr)
+library(doMC)
+registerDoMC(4)
 
 eweekdata = brasilio() %>%
   filter(place_type == "city", city != "Importados/Indefinidos") %>% 
@@ -45,7 +47,7 @@ eweekdata = eweekdata %>% anti_join(
 eweekdata$cidade = relevel(factor(eweekdata$cidade), "São Paulo-SP")
 
 fit = glm(wcases ~ ns(myweek, 3) + cidade + offset(log(estimated_population_2019)),
-          family=poisson(link="log"), data = eweekdata)
+          family=quasipoisson, data = eweekdata)
 
 model = tidy(fit)
 
@@ -53,14 +55,47 @@ mycoefs = model %>%
   filter(str_detect(term, "cidade")) %>% 
   mutate(term = str_remove(term, "cidade"))
 
-eweekdata %>% 
-  filter(cidade == "Campinas-SP") %>% 
-  tail(1)
-
 ## automatizar predicoes (não utilizar intervalos de confianca e sim de predicao)
-newdata = tibble(cidade = "Campinas-SP", estimated_population_2019=1204073,
-                 eweek = 22:23, myweek = 11:12)
-add_ci(newdata, fit)
+newdata = eweekdata %>%
+  group_by(cidade, estimated_population_2019, city_ibge_code) %>%
+  top_n(2, eweek) %>% 
+  mutate(eweek = eweek + 2L,
+         wcases = NA,
+         wdeaths = NA,
+         myweek = myweek + 2L) %>% 
+  ungroup() %>% 
+  select(-wcases)
+
+rodpoisson = function(n, lambda, disp){
+  rnbinom(n, size=(lambda/(disp-1)), mu=lambda)
+}
+
+getPI = function(data4pred, inputdata, model, nSim=1000, confs = c(.80, .90, .95)){
+  wcases_expected = predict(model, type='response')
+  preds = foreach(i=1:nSim, .combine = cbind) %dopar% {
+    eweekdata_sim = inputdata %>%
+      mutate(wcases = rodpoisson(length(wcases_expected), lambda = wcases_expected,
+                                 disp = summary(model)$dispersion))
+    ##mutate(wcases = rpois(length(wcases_expected), lambda = wcases_expected))
+    fit_sim = glm(wcases ~ ns(myweek, 3) + cidade + offset(log(estimated_population_2019)),
+                  family=quasipoisson, data = eweekdata_sim)
+    wcases_pred = predict(fit_sim, newdata=data4pred, type='response')
+    ##rpois(length(wcases_pred), lambda = wcases_pred)
+    rodpoisson(length(wcases_pred), lambda = wcases_pred, disp = summary(fit_sim)$dispersion)
+  }
+
+  lwr = (1-confs)/2
+  names(lwr) = sprintf("lwr%.3f", confs)
+  upr = confs + lwr
+  names(upr) = sprintf("upr%.3f", confs)
+  
+  PI = t(apply(preds, 1, quantile, probs = c(lwr, upr)))
+  colnames(PI) = names(c(lwr, upr))
+  cbind(pred = predict(model, newdata=data4pred, type='response'), PI) %>% 
+    as_tibble()
+}
+
+tmp = newdata %>% getPI(eweekdata, fit)
 
 
 
@@ -91,3 +126,19 @@ model2 = tidy(fit2)
 mycoefs2 = model2 %>%
   filter(str_detect(term, "cidade")) %>% 
   mutate(term = str_remove(term, "cidade"))
+
+
+newdata = eweekdata2 %>%
+  group_by(cidade, estimated_population_2019, city_ibge_code) %>%
+  top_n(2, eweek) %>% 
+  mutate(eweek = eweek + 2L,
+         wcases = NA,
+         wdeaths = NA,
+         myweek = myweek + 2L) %>% 
+  ungroup() %>% 
+  select(-wcases)
+
+newdata %>%
+  add_ci(fit2, yhatName = "wcases", names = c("lci", "uci")) %>% 
+  add_pi(fit2, names = c("lpi", "upi")) %>% 
+  select(cidade, eweek, wcases, lci, uci, pred, lpi, upi)
