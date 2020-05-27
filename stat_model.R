@@ -1,6 +1,7 @@
+##pkgs = c("lubridate", "ciTools", "tidyverse", "broom", "stringr", "doMC", "splines")
+##install.packages(pkgs)
 library(lubridate)
 library(splines)
-library(ciTools)
 library(datacovidbr)
 library(tidyverse)
 library(broom)
@@ -70,7 +71,7 @@ rodpoisson = function(n, lambda, disp){
   rnbinom(n, size=(lambda/(disp-1)), mu=lambda)
 }
 
-getPI = function(data4pred, inputdata, model, nSim=1000, confs = c(.80, .90, .95)){
+getPI = function(data4pred, inputdata, model, nSim=10000, confs = c(.80, .90, .95)){
   wcases_expected = predict(model, type='response')
   preds = foreach(i=1:nSim, .combine = cbind) %dopar% {
     eweekdata_sim = inputdata %>%
@@ -95,7 +96,7 @@ getPI = function(data4pred, inputdata, model, nSim=1000, confs = c(.80, .90, .95
     as_tibble()
 }
 
-tmp = newdata %>% getPI(eweekdata, fit)
+out = newdata %>% bind_cols(newdata %>% getPI(eweekdata, fit))
 
 
 
