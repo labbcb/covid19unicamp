@@ -1,5 +1,5 @@
 ---
-title: "Regressão de Poisson: Casos de Covid19 nas cidades do Brasil"
+title: "Regressão de Quasi-Poisson: Casos de Covid19 nas cidades do Brasil"
 date: "Ultima atualização: `r format(Sys.time(), '%d de %B de %Y')`"
 output: 
   html_document:
@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
   fig.height = 6
 )
 
-source("../stats_models/src_cases_poisson.R", encoding = "UTF-8")
+source("../stats_models/src_cases_poisson.R")
 
 e <- max(eweekdata$eweek)
 n_cit <- length(unique(eweekdata$cidade))
@@ -31,7 +31,7 @@ Seja $Y_{it}$ número de casos na cidade $i$ na semana $t$.
 Assumimos que $Y_{it} \mid \mu_{it} \sim \mathrm{Poisson}(\mu_{it})$, em que 
 
 $$
-\log \mu_{it} = \alpha + \log(\mathrm{pop}_i) + g(\mathrm{myweek}_t) + \mathrm{cidade}_i + \mathrm{QIDHM}_i
+\log \mu_{it} = \alpha + \log(\mathrm{pop}_i) + g(\mathrm{myweek}_t) + \mathrm{cidade}_i
 $$
 com $i = 1, \ldots, `r n_cit`$ e $t = 1, \ldots, n_{it}$, sendo 
 que $g(\cdot)$ é uma base de splines cúbica.

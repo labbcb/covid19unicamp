@@ -1,8 +1,9 @@
 library(datacovidbr)
 library(dplyr)
-library(broom)
 library(stringr)
 library(lubridate)
+library(doMC)
+registerDoMC(4)
 
 # Data manipulations ------------------------------------------------------
 
@@ -45,24 +46,57 @@ eweekdata <- eweekdata %>% anti_join(
 
 eweekdata$cidade <- relevel(factor(eweekdata$cidade), "São Paulo-SP")
 
+rm(rm_few, rm_neg)
+
+# IDH <- readxl::read_excel("./dados_fixos/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
+#   filter(ANO == 2010) %>% 
+#   select(ANO:Município, IDHM) %>% 
+#   mutate(QIDHM = case_when(
+#     IDHM < .5              ~ "Muito Baixo",
+#     IDHM >= .5 & IDHM < .6 ~ "Baixo",
+#     IDHM >= .6 & IDHM < .7 ~ "Médio",
+#     IDHM >= .7 & IDHM < .8 ~ "Alto",
+#     IDHM >= .8             ~ "Muito Alto"
+#   ),
+#   QIDHM = factor(QIDHM,
+#                  levels = c("Muito Alto", "Alto", "Médio", "Baixo", "Muito Baixo")))
+# 
+# eweekdata <- eweekdata %>%
+#   inner_join(IDH, by=c('city_ibge_code'='Codmun7')) %>% 
+#   select(-ANO, -UF, -Codmun6, -Município)
 
 
-IDH <- readxl::read_excel("../dados_fixos/atlas2013_dadosbrutos_pt.xlsx", sheet=2) %>%
-  filter(ANO == 2010) %>% 
-  select(ANO:Município, IDHM) %>% 
-  mutate(QIDHM = case_when(
-    IDHM < .5              ~ "Muito Baixo",
-    IDHM >= .5 & IDHM < .6 ~ "Baixo",
-    IDHM >= .6 & IDHM < .7 ~ "Médio",
-    IDHM >= .7 & IDHM < .8 ~ "Alto",
-    IDHM >= .8             ~ "Muito Alto"
-  ),
-  QIDHM = factor(QIDHM,
-                 levels = c("Muito Alto", "Alto", "Médio", "Baixo", "Muito Baixo")))
+# Function to obtain the prediction intervals -----------------------------
 
-eweekdata <- eweekdata %>%
-  inner_join(IDH, by=c('city_ibge_code'='Codmun7')) %>% 
-  select(-ANO, -UF, -Codmun6, -Município)
+rodpoisson <- function(n, lambda, disp){
+  rnbinom(n, size=(lambda/(disp-1)), mu=lambda)
+}
 
-
-
+getPI <- function(data4pred, model, nSim=100, confs = c(.80, .90, .95)){
+  
+  wcases_expected <- predict(model, type='response')
+  inputdata <- model$data
+  
+  preds <- foreach(i=1:nSim, .combine = cbind) %dopar% {
+    eweekdata_sim <- inputdata %>%
+      mutate(wcases = rodpoisson(length(wcases_expected), lambda = wcases_expected,
+                                 disp = summary(model)$dispersion))
+    ##mutate(wcases = rpois(length(wcases_expected), lambda = wcases_expected))
+    fit_sim <- glm(wcases ~ ns(myweek, 3) + cidade + offset(log(estimated_population_2019)),
+                  family=quasipoisson, data = eweekdata_sim)
+    wcases_pred <- predict(fit_sim, newdata=data4pred, type='response')
+    ##rpois(length(wcases_pred), lambda = wcases_pred)
+    rodpoisson(length(wcases_pred), lambda = wcases_pred, disp = summary(fit_sim)$dispersion)
+  }
+  lwr <- (1-confs)/2
+  names(lwr) <- sprintf("lwr%.3f", confs)
+  upr <- confs + lwr
+  names(upr) <- sprintf("upr%.3f", confs)
+  
+  PI <- t(apply(preds, 1, quantile, probs = c(lwr, upr))) %>% 
+    as_tibble()
+  colnames(PI) <- names(c(lwr, upr))
+  
+  data4pred %>% 
+    bind_cols(pred = predict(model, newdata=data4pred, type='response'), PI)
+}

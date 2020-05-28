@@ -1,5 +1,4 @@
 library(splines)
-library(ciTools)
 
 library(Metrics)
 library(cowplot)
@@ -8,7 +7,7 @@ library(DT)
 
 # Preprocess eweek data ---------------------------------------------------
 
-source("../stats_models/get_eweek_data.R", encoding = "UTF-8")
+source("../stats_models/get_eweek_data.R")
 
 
 # Mean interval score (MIS) -----------------------------------------------
@@ -23,8 +22,6 @@ mis <- function(y, lt, ut, alpha = 0.05) {
 
 # Model fit and predictions -------------------------------------------------
 fit_model <- function(train, ahead=2, cv=FALSE) {
-
-  train <- eweekdata
 
   test <- train %>%
     filter(eweek > max(eweek) - ahead) 
@@ -45,24 +42,18 @@ fit_model <- function(train, ahead=2, cv=FALSE) {
   
   ## Fit the model
   fit <- glm(
-    formula = wcases ~ ns(myweek, 3) + QIDHM + cidade + offset(log(estimated_population_2019)),
+    formula = wcases ~ ns(myweek, 3) + cidade + offset(log(estimated_population_2019)),
     family = quasipoisson(link = "log"),
     data = train
   )
 
-  test <- test %>% 
-    add_ci(fit, alpha = 0.05, yhatName = "pred", names = c("lw_ci", "up_ci")) %>% 
-    mutate(
-      lw_pi = qpois(0.025, lambda = pred),
-      up_pi = qpois(0.975, lambda = pred)
-    )
+  test <- test %>%
+    getPI(fit, nSim = 100, confs = .95) %>% 
+    rename(lw_pi = lwr0.950, up_pi = upr0.950)
   
   train <- train %>% 
-    add_ci(fit, alpha = 0.05, yhatName = "pred", names = c("lw_ci", "up_ci")) %>% 
-    mutate(
-      lw_pi = qpois(0.025, lambda = pred),
-      up_pi = qpois(0.975, lambda = pred)
-    )
+    getPI(fit, nSim = 100, confs = .95) %>% 
+    rename(lw_pi = lwr0.950, up_pi = upr0.950)
   
   tb <- train %>% 
     mutate(base = "train") %>% 
@@ -119,5 +110,10 @@ summary_model <- function(tb, cities) {
     tab = tab
   )
 }
+
+## Usage
+# tb  <- fit_model(eweekdata, ahead = 2, cv = TRUE)
+# out <- summary_model(tb, cities = c("São Paulo-SP", "Campinas-SP"))
+
 
 
