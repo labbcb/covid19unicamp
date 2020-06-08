@@ -47,6 +47,7 @@ dd = dd_ori %>%
          d1 = c(0, diff(confirmed)),
          d2 = c(0, diff(d1))
   ) %>% 
+#  filter(date != "2020-05-07") %>% 
   select(data = date, casosAcumulados, d1, d2)
 visu(prep_data(
   data = dd,
@@ -66,14 +67,14 @@ O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul
 
 ```{r futuro}
 chute_campinas = c(3000, # 10% da pop
-                   40,
+                   65,
                    3)
 optCampinas = covid19peakfit(
   data = dd,
   n_cases = "d1",
   date_var = "data",
   init_pars = chute_campinas,
-  lim_inf = c(dd$casosAcumulados[nrow(dd)], 38, 0),
+  lim_inf = c(dd$casosAcumulados[nrow(dd)], 45, 0),
   weights = c(.5, 2, 5)
 )
 # optCampinas = opt(dd,
@@ -112,6 +113,7 @@ dd = dd_ori %>%
          d1 = c(0,diff(deaths)),
          d2 = c(0, diff(d1))
   ) %>% 
+  filter(date != "2020-05-07") %>% 
   select(data = date, casosAcumulados, d1, d2)
 visu(prep_data(
   data = dd,
@@ -126,15 +128,15 @@ visu(prep_data(
 O gráfico a seguir mostra a situação atual em vermelho e os previstos em azul. Em seguida, uma tabela indicando a data prevista de pico e o número estimado.
 
 ```{r futuro-obt}
-chute_campinas = c(40,
-                   40,
-                   3)
+chute_campinas = c(100,
+                   55,
+                   5)
 optCampinas = covid19peakfit(
   data = dd,
   n_cases = "d1",
   date_var = "data",
   init_pars = chute_campinas,
-  lim_inf = c(20, 38, 0)
+  lim_inf = c(40, 45, 0)
 )
 # optCampinas = opt(dd,
 #                   chute = chute_campinas,
