@@ -53,7 +53,7 @@ visu(prep_data(
   data = dd,
   num_cases = "d1",
   date_var = "data"
-), FALSE)
+), TRUE)
 ```
 
 ## Predição
