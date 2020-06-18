@@ -1,4 +1,4 @@
-name: CI
+name: Update data
 
 on:
   schedule:
@@ -15,7 +15,7 @@ jobs:
           SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
           SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
-      - run: |
+        run: |
           cd sptracker
           Rscript -e "install.packages(c("rsconnect", "dplyr", "readr"))"
           Rscript update_data.R
