@@ -1,7 +1,7 @@
 ---
 title: "SP Tracker: COVID-19"
 resource_files:
-- data/dados_covid_sp.csv
+- data/covid_semana.rds
 runtime: shiny
 output:
   flexdashboard::flex_dashboard:
@@ -56,24 +56,8 @@ getPI = function(data4pred, inputdata, model, nSim=100, confs = c(.80, .90, .95)
 ```
 
 ```{r, include=FALSE}
-path = "data"
-covid_semana = read_csv2(file.path(path, "dados_covid_sp.csv")) %>%
-  group_by(nome_ra, cod_ra, nome_drs, cod_drs, codigo_ibge, nome_munic, semana_epidem) %>% 
-  summarise(obitos_novos_semana = as.integer(sum(obitos_novos)),
-            casos_novos_semana = as.integer(sum(casos_novos)),
-            pop = as.integer(max(pop)),
-            pop60 = as.integer(max(pop_60)),
-            area = as.integer(max(area))) %>% 
-  filter(obitos_novos_semana > 0 | casos_novos_semana > 0) %>% 
-  mutate(semana = 1:n(),
-         casos_evolucao = casos_novos_semana/lag(casos_novos_semana, 1, 0),
-         obitos_evolucao = obitos_novos_semana/lag(obitos_novos_semana, 1, 0),
-         casos_evolucao = paste0(round((casos_evolucao-1)*100, 0), "%"),
-         casos_evolucao = ifelse(grepl("\\-", casos_evolucao), casos_evolucao, paste0("+", casos_evolucao)),
-         obitos_evolucao = paste0(round((obitos_evolucao-1)*100, 0), "%"),
-         obitos_evolucao = ifelse(grepl("\\-", obitos_evolucao), obitos_evolucao, paste0("+", obitos_evolucao))
-) %>% 
-  ungroup()
+# Ler arquivo RDS que contem o objeto com os dados atualizados e ja processados.
+covid_semana = readRDS("data/covid_semana.rds")
 hoje = today("America/Sao_Paulo")
 ```
 
