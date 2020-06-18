@@ -20,6 +20,6 @@ jobs:
         run: |
           cd sptracker
           sudo apt-get install -y libcurl4-openssl-dev
-          Rscript -e "install.packages(c('rsconnect', 'dplyr', 'readr'))"
+          Rscript install_packages.R
           Rscript update_data.R
           Rscript -e "rsconnect::setAccountInfo(name='${SHINYAPPS_NAME}', token='${SHINYAPPS_TOKEN}', secret='${SHINYAPPS_SECRET}');rsconnect::deployApp()"
