@@ -19,7 +19,7 @@ jobs:
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
         run: |
           cd sptracker
-          apt-get install -y libcurl4-openssl-dev
+          sudo apt-get install -y libcurl4-openssl-dev
           Rscript -e "install.packages(c('rsconnect', 'dplyr', 'readr'))"
           Rscript update_data.R
           Rscript -e "rsconnect::setAccountInfo(name='${SHINYAPPS_NAME}', token='${SHINYAPPS_TOKEN}', secret='${SHINYAPPS_SECRET}');rsconnect::deployApp()"
