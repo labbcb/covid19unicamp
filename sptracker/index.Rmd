@@ -1,0 +1,237 @@
+---
+title: "SP Tracker: COVID-19"
+resource_files:
+- data/dados_covid_sp.csv
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(lubridate)
+library(tidyverse)
+library(ggplot2)
+library(ggsci)
+library(splines)
+library(foreach)
+
+
+rodpoisson = function(n, lambda, disp){
+  rnbinom(n, size=(lambda/(disp-1)), mu=lambda)
+}
+
+getPI = function(data4pred, inputdata, model, nSim=100, confs = c(.80, .90, .95)){
+  response = predict(model, type='response')
+  varname = all.vars(formula(model))[1]
+  preds = foreach(i=1:nSim, .combine = cbind) %do% {
+  ##for (i in 1:nSim){
+    data_sim = inputdata %>%
+      mutate(!!varname := rodpoisson(length(response),
+                                     lambda = response,
+                                     disp = summary(model)$dispersion))
+    fit_sim = glm(formula(model),
+                  family=family(model), data = data_sim)
+    if (summary(fit_sim)$dispersion < 1){
+      i = i-1
+      return(NULL)
+    }
+    pred = predict(fit_sim, newdata=data4pred, type='response')
+    rodpoisson(length(pred), lambda = pred, disp = summary(fit_sim)$dispersion)
+  }
+  
+  lwr = (1-confs)/2
+  names(lwr) = sprintf("lwr%.3f", confs)
+  upr = confs + lwr
+  names(upr) = sprintf("upr%.3f", confs)
+  
+  PI = t(apply(preds, 1, quantile, probs = c(lwr, upr)))
+  colnames(PI) = names(c(lwr, upr))
+  cbind(pred = predict(model, newdata=data4pred, type='response'), PI) %>% 
+    as_tibble()
+}
+
+```
+
+```{r, include=FALSE}
+path = "data"
+covid_semana = read_csv2(file.path(path, "dados_covid_sp.csv")) %>%
+  group_by(nome_ra, cod_ra, nome_drs, cod_drs, codigo_ibge, nome_munic, semana_epidem) %>% 
+  summarise(obitos_novos_semana = as.integer(sum(obitos_novos)),
+            casos_novos_semana = as.integer(sum(casos_novos)),
+            pop = as.integer(max(pop)),
+            pop60 = as.integer(max(pop_60)),
+            area = as.integer(max(area))) %>% 
+  filter(obitos_novos_semana > 0 | casos_novos_semana > 0) %>% 
+  mutate(semana = 1:n(),
+         casos_evolucao = casos_novos_semana/lag(casos_novos_semana, 1, 0),
+         obitos_evolucao = obitos_novos_semana/lag(obitos_novos_semana, 1, 0),
+         casos_evolucao = paste0(round((casos_evolucao-1)*100, 0), "%"),
+         casos_evolucao = ifelse(grepl("\\-", casos_evolucao), casos_evolucao, paste0("+", casos_evolucao)),
+         obitos_evolucao = paste0(round((obitos_evolucao-1)*100, 0), "%"),
+         obitos_evolucao = ifelse(grepl("\\-", obitos_evolucao), obitos_evolucao, paste0("+", obitos_evolucao))
+) %>% 
+  ungroup()
+hoje = today("America/Sao_Paulo")
+```
+
+
+```{r seletor_cidade}
+selectizeInput('this_city',
+               label='Cidade',
+               choices = unique(covid_semana$nome_munic),
+               selected="Campinas")
+```
+
+```{r organize_data}
+mydata = reactive(covid_semana %>% filter(nome_munic == input$this_city))
+```
+
+Status
+---------------------
+
+### Casos
+
+```{r}
+renderValueBox({
+  valueBox(mydata() %>% summarise(sum(casos_novos_semana)) %>% pull(),
+           caption = "Casos Acumulados",
+           icon = "ion-medkit",
+           color = "warning")
+})
+```
+
+### Evolução Casos
+
+```{r}
+renderValueBox({
+  msg_ev_casos = mydata() %>%
+    filter(semana_epidem < epiweek(hoje)) %>%
+    tail(1) %>%
+    select(casos_evolucao) %>%
+    pull()
+  valueBox(msg_ev_casos,
+           caption = "Evolução Semanal de Casos",
+           icon = "ion-medkit",
+           color = ifelse(grepl("\\+", msg_ev_casos), "danger", "success"))
+})
+```
+
+### Óbitos
+
+```{r}
+renderValueBox({
+  valueBox(mydata() %>% summarise(sum(obitos_novos_semana)) %>% pull(),
+           caption = "Óbitos Acumulados",
+           icon = "fa-medkit",
+           color = "warning")
+})
+```
+
+### Evolução Óbitos
+
+```{r}
+renderValueBox({
+  msg_ev_obitos = mydata() %>%
+    filter(semana_epidem < epiweek(hoje)) %>%
+    tail(1) %>%
+    select(obitos_evolucao) %>%
+    pull()
+  valueBox(msg_ev_obitos,
+           caption = "Evolução Semanal de Óbitos",
+           icon = "ion-medkit",
+           color = ifelse(grepl("\\+", msg_ev_obitos), "danger", "success"))
+})
+```
+
+Evolução Semanal
+-----------------------
+
+### Número de Casos e Óbitos Semanais
+
+```{r}
+renderPlot({
+  this_data = mydata() %>%
+    select(semana_epidem, semana, obitos_novos_semana, casos_novos_semana) %>% 
+    mutate(status =
+             case_when(
+               semana_epidem < epiweek(hoje) ~ "Semanas Anteriores",
+               semana_epidem == epiweek(hoje) ~ "Semana Atual"
+             ))
+  fitO = glm(obitos_novos_semana ~ ns(semana, 3),
+             data=this_data %>% filter(status == "Semanas Anteriores"),
+             family=quasipoisson)
+  fitC = glm(casos_novos_semana ~ ns(semana, 3),
+             data=this_data %>% filter(status == "Semanas Anteriores"),
+             family=quasipoisson)
+  
+  if (any(this_data$status == "Semana Atual")){
+    newdata = this_data %>%
+      filter(status == "Semana Atual") %>%
+      select(semana_epidem, semana) %>%
+      mutate(semana_epidem = semana_epidem + 1,
+             semana = semana + 1,
+             status = "Semana Futura")
+    newdata = this_data %>%
+      filter(status == "Semana Atual") %>%
+      bind_rows(newdata)
+  }else{
+    newdata = this_data %>% tail(2) %>%
+      select(semana_epidem, semana) %>%
+      mutate(semana_epidem = semana_epidem + 2,
+             semana = semana + 2,
+             status = "Semana Futura")
+  }
+  
+  org_data = this_data %>%
+    filter(status == "Semanas Anteriores") %>% 
+    bind_rows(newdata)
+  org_data$casos_pred = predict(fitC, type='response', newdata=org_data)
+  org_data$obitos_pred = predict(fitO, type='response', newdata=org_data)
+
+  org_data = org_data %>%
+    rename(obitos_obs = obitos_novos_semana,
+           casos_obs = casos_novos_semana) %>% 
+    pivot_longer(c(-semana_epidem, -semana, -status),
+                 names_to = c("tipo", "tipo2"),
+                 names_sep = "_",
+                 values_to = "valor"
+                 ) %>% 
+    pivot_wider(c(semana_epidem, semana, status, tipo),
+                names_from = "tipo2", values_from = "valor") %>%
+    arrange(tipo, semana) %>% 
+    mutate(status = factor(status, levels = c("Semanas Anteriores", "Semana Atual", "Semana Futura"), ordered=TRUE),
+           obs = ifelse(is.na(obs), 0, obs),
+           tipo = ifelse(tipo == "casos", "Casos", "Óbitos"))
+  
+  piCasos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Casos"),
+        inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Casos"),
+        model = fitC)
+  piObitos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Óbitos"),
+        inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Óbitos"),
+        model = fitO)
+
+  org_data$lwr = org_data$upr = NA_real_
+  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'lwr'] = piCasos$lwr0.950
+  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'upr'] = piCasos$upr0.950
+  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'lwr'] = piObitos$lwr0.950
+  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'upr'] = piObitos$upr0.950
+
+  ggplot(org_data, aes(semana)) +
+    geom_bar(stat='identity', aes(y=obs, fill=status)) +
+    geom_line(aes(y=pred, group='tipo')) +
+    geom_errorbar(aes(ymin=lwr, ymax=upr)) +
+    geom_point(aes(y=pred, colour=status, alpha= 1*(status != "Semanas Anteriores"))) +
+    facet_grid(rows= "tipo", scales = "free_y", switch = "y") +
+    theme_bw() +
+    theme(legend.position = "bottom", legend.title = element_blank()) +
+    xlab("Semana desde o Primeiro Caso") +
+    ylab("") +
+    scale_y_continuous(position = "right") +
+    ggtitle("") +
+    scale_alpha(guide = 'none') +
+    scale_colour_jco() + scale_fill_jco()
+})
+```
