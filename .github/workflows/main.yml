@@ -19,6 +19,6 @@ jobs:
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
         run: |
           cd sptracker
-          Rscript -e "install.packages(c("rsconnect", "dplyr", "readr"))"
+          Rscript -e "install.packages(c('rsconnect', 'dplyr', 'readr'))"
           Rscript update_data.R
           Rscript -e "rsconnect::setAccountInfo(name='${SHINYAPPS_NAME}', token='${SHINYAPPS_TOKEN}', secret='${SHINYAPPS_SECRET}');rsconnect::deployApp()"
