@@ -1,0 +1,12 @@
+install.packages(c(
+ "rsconnect",
+ "dplyr",
+ "readr",
+ "flexdashboard",
+ "lubridate",
+ "tidyverse",
+ "ggplot2",
+ "ggsci",
+ "splines",
+ "foreach"
+))
