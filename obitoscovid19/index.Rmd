@@ -17,31 +17,37 @@ library(tidyverse)
 library(lubridate)
 library(ciTools)
 hoje = today("America/Sao_Paulo")
-msdata = readRDS(paste0("dados/msdata-31-08-2020.rds"))
+## msdata = readRDS(paste0("dados/msdata-31-08-2020.rds"))
 ```
 
-```{r seletor_data, eval=FALSE}
+Parâmetros
+-------------------------
+
+```{r seletor_data}
 datas = c("17-08-2020", "24-08-2020", "31-08-2020")
-selectizeInput('this_date',
-               label='Data de Compilação do Ministério da Saúde',
+output$this_date = renderUI({
+  selectizeInput('this_date',
+               label='Data do Ministério da Saúde',
                choices = datas,
                selected=datas[length(datas)])
+})
+uiOutput("this_date")
 
-# msdata = reactive({
-#   message("Data: ", input$this_date)
-#   readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
-# })
-msdata = readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
+msdata = reactive({
+ message("Data: ", input$this_date)
+ readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
+})
+# msdata = readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
 ```
 
-
 ```{r seletor_uf}
-ufs = reactive({msdata %>%
-  select(SG_UF) %>%
-  filter(!is.na(SG_UF)) %>% 
-  distinct() %>%
-  arrange(SG_UF) %>%
-  pull()
+ufs = reactive({
+  msdata() %>%
+    select(SG_UF) %>%
+    filter(!is.na(SG_UF)) %>% 
+    distinct() %>%
+    arrange(SG_UF) %>%
+    pull()
 })
 
 output$this_uf = renderUI({
@@ -56,7 +62,7 @@ uiOutput("this_uf")
 ```{r cidades_disponiveis}
 cities = reactive({
   message("Estado Selecionado: ", input$this_uf)
-  msdata %>%
+  msdata() %>%
     filter(SG_UF == input$this_uf) %>%
     select(ID_MN_RESI) %>% 
     distinct() %>% arrange(ID_MN_RESI) %>% pull()
@@ -81,12 +87,12 @@ checkboxInput("fit", "Ajustar modelos?", FALSE)
 
 ```{r get_data}
 indata = reactive({
-  msdata %>%
+  msdata() %>%
     filter(ID_MN_RESI == input$this_city,
            SG_UF == input$this_uf, EVOLUCAO == 2) %>% 
     select(-SG_UF, -ID_MN_RESI, -CO_MUN_RES, -EVOLUCAO) %>% 
     mutate(eweek = epiweek(DT_EVOLUCA),
-           consolidado = DT_EVOLUCA <= hoje - 20,
+           consolidado = DT_EVOLUCA <= dmy(input$this_date) - 20,
            consolidado = ifelse(consolidado, "Sim", "Não"))
 })
 ```
@@ -94,9 +100,8 @@ indata = reactive({
 Situação Atual
 ------------------------------------
 
-
 ```{r summaries}
-sumario = reactive(msdata %>%
+sumario = reactive(msdata() %>%
                      filter(ID_MN_RESI == input$this_city,
                             SG_UF == input$this_uf) %>% 
                      group_by(EVOLUCAO) %>% tally() %>%

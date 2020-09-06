@@ -190,24 +190,24 @@ renderPlot({
            obs = ifelse(is.na(obs), 0, obs),
            tipo = ifelse(tipo == "casos", "Casos", "Óbitos"))
   
-  piCasos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Casos"),
-        inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Casos"),
-        model = fitC)
-  piObitos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Óbitos"),
-        inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Óbitos"),
-        model = fitO)
-
-  org_data$lwr = org_data$upr = NA_real_
-  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'lwr'] = piCasos$lwr0.950
-  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'upr'] = piCasos$upr0.950
-  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'lwr'] = piObitos$lwr0.950
-  org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'upr'] = piObitos$upr0.950
+  # piCasos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Casos"),
+  #       inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Casos"),
+  #       model = fitC)
+  # piObitos = getPI(data4pred = org_data %>% filter(status != "Semanas Anteriores", tipo == "Óbitos"),
+  #       inputdata = org_data %>% filter(status == "Semanas Anteriores", tipo == "Óbitos"),
+  #       model = fitO)
+  # 
+  # org_data$lwr = org_data$upr = NA_real_
+  # org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'lwr'] = piCasos$lwr0.950
+  # org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Casos", 'upr'] = piCasos$upr0.950
+  # org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'lwr'] = piObitos$lwr0.950
+  # org_data[org_data$status != "Semanas Anteriores" & org_data$tipo == "Óbitos", 'upr'] = piObitos$upr0.950
 
   ggplot(org_data, aes(semana)) +
     geom_bar(stat='identity', aes(y=obs, fill=status)) +
     geom_line(aes(y=pred, group='tipo')) +
-    geom_errorbar(aes(ymin=lwr, ymax=upr)) +
-    geom_point(aes(y=pred, colour=status, alpha= 1*(status != "Semanas Anteriores"))) +
+#    geom_errorbar(aes(ymin=lwr, ymax=upr)) +
+#    geom_point(aes(y=pred, colour=status, alpha= 1*(status != "Semanas Anteriores"))) +
     facet_grid(rows= "tipo", scales = "free_y", switch = "y") +
     theme_bw() +
     theme(legend.position = "bottom", legend.title = element_blank()) +

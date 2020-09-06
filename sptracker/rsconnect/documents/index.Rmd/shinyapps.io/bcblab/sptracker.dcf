@@ -5,8 +5,8 @@ account: bcblab
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2451572
-bundleId: 3287650
+bundleId: 3568154
 url: https://bcblab.shinyapps.io/sptracker/
-when: 1592490636.13052
+when: 1598640917.57448
 asMultiple: FALSE
 asStatic: FALSE
