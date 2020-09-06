@@ -1,0 +1,262 @@
+---
+title: "COVID-19: Registros do Ministério da Saúde (31/08/2020)"
+resource_files:
+- dados/msdata-17-08-2020.rds
+- dados/msdata-24-08-2020.rds
+- dados/msdata-31-08-2020.rds
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(lubridate)
+library(ciTools)
+hoje = today("America/Sao_Paulo")
+msdata = readRDS(paste0("dados/msdata-31-08-2020.rds"))
+```
+
+```{r seletor_data, eval=FALSE}
+datas = c("17-08-2020", "24-08-2020", "31-08-2020")
+selectizeInput('this_date',
+               label='Data de Compilação do Ministério da Saúde',
+               choices = datas,
+               selected=datas[length(datas)])
+
+# msdata = reactive({
+#   message("Data: ", input$this_date)
+#   readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
+# })
+msdata = readRDS(paste0("dados/msdata-", input$this_date, ".rds"))
+```
+
+
+```{r seletor_uf}
+ufs = reactive({msdata %>%
+  select(SG_UF) %>%
+  filter(!is.na(SG_UF)) %>% 
+  distinct() %>%
+  arrange(SG_UF) %>%
+  pull()
+})
+
+output$this_uf = renderUI({
+  selectizeInput('this_uf',
+               label='UF',
+               choices = ufs(),
+               selected="SP")
+})
+uiOutput("this_uf")
+```
+
+```{r cidades_disponiveis}
+cities = reactive({
+  message("Estado Selecionado: ", input$this_uf)
+  msdata %>%
+    filter(SG_UF == input$this_uf) %>%
+    select(ID_MN_RESI) %>% 
+    distinct() %>% arrange(ID_MN_RESI) %>% pull()
+  })
+```
+
+
+```{r seletor_cidade}
+output$this_city = renderUI({
+  selectizeInput('this_city',
+                 label='Cidade',
+                 choices = cities(),
+                 selected="CAMPINAS")
+  
+})
+uiOutput("this_city")
+```
+
+```{r fit_models_question}
+checkboxInput("fit", "Ajustar modelos?", FALSE)
+```
+
+```{r get_data}
+indata = reactive({
+  msdata %>%
+    filter(ID_MN_RESI == input$this_city,
+           SG_UF == input$this_uf, EVOLUCAO == 2) %>% 
+    select(-SG_UF, -ID_MN_RESI, -CO_MUN_RES, -EVOLUCAO) %>% 
+    mutate(eweek = epiweek(DT_EVOLUCA),
+           consolidado = DT_EVOLUCA <= hoje - 20,
+           consolidado = ifelse(consolidado, "Sim", "Não"))
+})
+```
+
+Situação Atual
+------------------------------------
+
+
+```{r summaries}
+sumario = reactive(msdata %>%
+                     filter(ID_MN_RESI == input$this_city,
+                            SG_UF == input$this_uf) %>% 
+                     group_by(EVOLUCAO) %>% tally() %>%
+  mutate(DESFECHO = case_when(EVOLUCAO == 1 ~ "Recuperados",
+                              EVOLUCAO == 2 ~ "Óbitos",
+                              EVOLUCAO == 3 ~ "Óbitos por Outras Causas",
+                              EVOLUCAO == 9 ~ "Ignorado",
+                              TRUE ~ "Acompanhamento")))
+```
+
+<!-- ### Recuperados -->
+
+```{r, eval=FALSE}
+renderValueBox({
+  valueBox(sumario() %>%
+             filter(DESFECHO == "Recuperados") %>%
+             select(n) %>% pull(),
+           icon = "fa-medkit",
+           caption = "Recuperados",
+           color = "success")
+})
+```
+
+### Em Acompanhamento
+
+```{r}
+renderValueBox({
+  valueBox(sumario() %>%
+             filter(DESFECHO == "Acompanhamento") %>%
+             select(n) %>% pull(),
+           icon = "fa-eyedropper",
+           caption = "Em Acompanhamento",
+           color = "warning")
+})
+```
+
+### Óbitos
+
+```{r}
+renderValueBox({
+  valueBox(sumario() %>%
+             filter(DESFECHO == "Óbitos") %>%
+             select(n) %>% pull(),
+           icon = "fa-minus-square",
+           caption = "Óbitos",
+           color = "danger")
+})
+```
+
+Evolução
+---------------------------------
+
+### Óbitos Diários
+
+```{r obitos_diarios}
+renderPlot({
+  indata1 = indata() %>% group_by(DT_EVOLUCA) %>% 
+    summarise(OBITOS = n(), consolidado = all(consolidado == "Sim")) %>% 
+    arrange(DT_EVOLUCA) %>% 
+    mutate(dia = DT_EVOLUCA - lag(DT_EVOLUCA, n=1, default = DT_EVOLUCA[1]-1),
+           dia = cumsum(as.integer(dia)),
+           consolidado = ifelse(consolidado, "Sim", "Não"))
+
+  if (input$fit){
+  fit = glm(OBITOS ~ dia + I(dia^2) + log(dia),
+            data = indata1 %>% filter(consolidado == "Sim"),
+            family=poisson())
+
+    indata1 = (indata1 %>%
+      filter(consolidado == "Sim") %>% 
+      add_ci(fit, names=c("lwr", "upr"))) %>% 
+    bind_rows(
+      indata1 %>% 
+        filter(consolidado == "Não") %>% 
+        add_pi(fit, names=c("lwr", "upr"))
+    )
+  }
+
+  theplot = ggplot(indata1, aes(DT_EVOLUCA)) +
+    geom_bar(aes(weight=OBITOS, fill=consolidado))
+  
+  if (input$fit){
+    theplot = theplot +
+      geom_ribbon(aes(y=pred, ymin=lwr, ymax=upr), fill="gray50", alpha=.50) +
+      geom_line(aes(y=pred))
+  }
+  
+  theplot +
+    theme_bw() + xlab("Data do Óbito") + ylab("Número de Óbitos") +
+    theme(legend.position = "bottom") +
+    labs(fill = "Dado Consolidado?")
+})
+```
+
+
+### Óbitos por Semana Epidemiológica
+
+```{r}
+renderPlot({
+  indata1 = indata() %>% group_by(eweek) %>% 
+    summarise(OBITOS = n(), consolidado = all(consolidado == "Sim")) %>% 
+    arrange(eweek) %>% 
+    mutate(consolidado = ifelse(consolidado, "Sim", "Não"))
+
+  if (input$fit){
+    fit = glm(OBITOS ~ eweek + I(eweek^2) + log(eweek),
+            data = indata1 %>% filter(consolidado == "Sim"),
+            family=poisson())
+
+    indata1 = (indata1 %>%
+      filter(consolidado == "Sim") %>% 
+      add_ci(fit, names=c("lwr", "upr"))) %>% 
+    bind_rows(
+      indata1 %>% 
+        filter(consolidado == "Não") %>% 
+        add_pi(fit, names=c("lwr", "upr"))
+    )
+  }
+
+  theplot = ggplot(indata1, aes(eweek)) +
+    geom_bar(aes(weight=OBITOS, fill=consolidado))
+  
+  if (input$fit){
+    theplot = theplot +
+      geom_ribbon(aes(y=pred, ymin=lwr, ymax=upr), fill="gray50", alpha=.50) +
+      geom_line(aes(y=pred))
+    }
+  
+  theplot +
+    theme_bw() +
+    xlab("Semana Epidemiológica de Óbito") + ylab("Número de Óbitos") +
+    theme(legend.position = "bottom") +
+    labs(fill = "Dado Consolidado?")
+})
+
+# renderPlot({
+#     indata() %>%
+#     group_by(eweek) %>%
+#     summarise(OBITOS=n(), consolidado = all(consolidado)) %>% 
+#     ggplot(aes(eweek, weight=OBITOS, fill=consolidado)) +
+#     geom_bar() + 
+#     #geom_smooth(aes(eweek, OBITOS)) +
+#     theme_bw() +
+#     xlab("Semana Epidemiológica de Óbito") + ylab("Óbitos") +
+#     theme(legend.position = "bottom") +
+#     labs(fill = "Dado Consolidado?")
+#})
+```
+
+### Óbitos por Idade e Sexo
+
+```{r}
+renderPlot({
+  indata() %>% 
+    ggplot(aes(NU_IDADE_N, after_stat(count),
+               fill=CS_SEXO)) +
+    geom_density(alpha=.5) +
+    theme_bw() + xlab("Idade") + ylab("Número de Óbitos") +
+    theme(legend.position = "bottom") +
+    labs(fill = "Sexo do Paciente")
+})
+```
+

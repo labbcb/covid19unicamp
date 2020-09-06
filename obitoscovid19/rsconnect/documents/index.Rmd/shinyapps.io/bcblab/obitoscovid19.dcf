@@ -1,0 +1,12 @@
+name: obitoscovid19
+title: obitoscovid19
+username:
+account: bcblab
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2695399
+bundleId: 3599062
+url: https://bcblab.shinyapps.io/obitoscovid19/
+when: 1599403915.29662
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,31 @@
+---
+title: "Rastreio Óbitos COVID-19"
+output: flexdashboard::flex_dashboard
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(lubridate)
+```
+
+
+### Chart A
+
+```{r}
+
+```
+
+
+### Chart B
+
+```{r}
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
