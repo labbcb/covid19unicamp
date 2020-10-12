@@ -24,7 +24,7 @@ jobs:
           Rscript update_data.R
 
       - name: Deploy shiny app
-      - env:
+        env:
           SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
           SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
