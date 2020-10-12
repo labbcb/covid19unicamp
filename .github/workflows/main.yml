@@ -8,8 +8,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: rocker/tidyverse:4.0.1
+    runs-on: ubuntu-18.04
+    container: rocker/verse:4.0.1
     
     steps:
       - uses: actions/checkout@master
