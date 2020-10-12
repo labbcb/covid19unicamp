@@ -13,7 +13,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@master
-      - uses: r-lib/actions/setup-r@v1
 
       - name: Install dependencies
         run: install2.r rsconnect flexdashboard ggsci foreach
