@@ -9,17 +9,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: rocker/tidyverse:4.0.1
     
     steps:
       - uses: actions/checkout@master
       - uses: r-lib/actions/setup-r@v1
+
+      - name: Install dependencies
+        run: install2.r rsconnect flexdashboard ggsci foreach
+
+      - name: Update data
+        run: |
+          cd sptracker
+          Rscript update_data.R
+
+      - name: Deploy shiny app
       - env:
           SHINYAPPS_NAME: ${{ secrets.SHINYAPPS_NAME }}
           SHINYAPPS_TOKEN: ${{ secrets.SHINYAPPS_TOKEN }}
           SHINYAPPS_SECRET: ${{ secrets.SHINYAPPS_SECRET }}
         run: |
           cd sptracker
-          sudo apt-get install -y libcurl4-openssl-dev
-          Rscript install_packages.R
-          Rscript update_data.R
           Rscript -e "rsconnect::setAccountInfo(name='${SHINYAPPS_NAME}', token='${SHINYAPPS_TOKEN}', secret='${SHINYAPPS_SECRET}');rsconnect::deployApp()"
